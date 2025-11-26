@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'about_screen.dart';
-import 'footer.dart'; // <-- Footer'ı import ettik
 
 class AdminHome extends StatelessWidget {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey =
+      GlobalKey<ScaffoldState>(); // <-- key
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class AdminHome extends StatelessWidget {
     final adminName = admin.adminName;
 
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey, // <-- buraya ekliyoruz
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -54,7 +54,10 @@ class AdminHome extends StatelessWidget {
         leadingWidth: 40,
         leading: IconButton(
           icon: Icon(Icons.menu, color: Colors.white, size: 28),
-          onPressed: () => _scaffoldKey.currentState!.openDrawer(),
+          onPressed:
+              () =>
+                  _scaffoldKey.currentState!
+                      .openDrawer(), // <-- buradan açıyoruz
         ),
         title: Row(
           children: [
@@ -111,9 +114,6 @@ class AdminHome extends StatelessWidget {
       body: Center(
         child: Text('Admin Home Screen', style: TextStyle(fontSize: 24)),
       ),
-
-      // Hazır footer widget'ını kullanıyoruz
-      bottomNavigationBar: Footer(),
     );
   }
 }
