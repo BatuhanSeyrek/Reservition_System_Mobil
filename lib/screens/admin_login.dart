@@ -132,11 +132,9 @@ class _AdminLoginState extends State<AdminLogin> {
                               _usernameController.text,
                               _passwordController.text,
                             );
-
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Giriş başarılı!')),
                             );
-
                             // ⭐ AdminHome'a yönlendirme
                             Navigator.pushReplacement(
                               context,

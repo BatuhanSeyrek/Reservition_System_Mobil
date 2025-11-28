@@ -5,10 +5,8 @@ class Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[900], // Navbar ile aynı renk
-        border: Border(
-          top: BorderSide(color: Colors.redAccent, width: 2), // Kırmızı detay
-        ),
+        color: Colors.grey[900],
+        border: Border(top: BorderSide(color: Colors.redAccent, width: 2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black45,

@@ -2,46 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'about_screen.dart';
-
-class AdminHome extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final admin = auth.admin!;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.grey[900],
-        title: Row(
-          children: [
-            Text(admin.storeName, style: TextStyle(color: Colors.white)),
-            SizedBox(width: 8),
-            Icon(Icons.content_cut, color: Colors.redAccent),
-          ],
-        ),
-        actions: [
-          GestureDetector(
-            onTap: () {
-              // Burada dropdown açma mantığı ekleyebilirsin
-            },
-            child: Row(
-              children: [
-                Text(admin.adminName, style: TextStyle(color: Colors.white)),
-                SizedBox(width: 6),
-                Icon(Icons.person, color: Colors.redAccent),
-                SizedBox(width: 16),
-              ],
-            ),
-          ),
-        ],
-      ),
-      drawer: Drawer(child: SidebarContent()),
-      body: Center(
-        child: Text('Admin Ana Sayfa', style: TextStyle(fontSize: 24)),
-      ),
-    );
-  }
-}
+import 'admin_chair.dart';
 
 class SidebarContent extends StatelessWidget {
   @override
@@ -53,22 +14,35 @@ class SidebarContent extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         DrawerHeader(
-          decoration: BoxDecoration(color: Colors.red),
+          decoration: BoxDecoration(
+            color: Colors.grey[900], // AppBar ile aynı renk
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Admin Panel',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+                admin.storeName,
+                style: TextStyle(
+                  color: Colors.white, // yazılar beyaz
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              SizedBox(height: 8),
-              Text(admin.storeName, style: TextStyle(color: Colors.white70)),
-              Text(admin.adminName, style: TextStyle(color: Colors.white70)),
+              SizedBox(height: 4),
+              Text(
+                admin.adminName,
+                style: TextStyle(
+                  color: Colors.white70, // hafif gri
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
         ),
         ListTile(
-          title: Text('About'),
+          leading: Icon(Icons.info, color: Colors.black87),
+          title: Text('About', style: TextStyle(color: Colors.black87)),
           onTap: () {
             Navigator.pop(context);
             Navigator.push(
@@ -78,6 +52,21 @@ class SidebarContent extends StatelessWidget {
           },
         ),
         ListTile(
+          leading: Icon(Icons.chair, color: Colors.black87),
+          title: Text(
+            'Chair Management',
+            style: TextStyle(color: Colors.black87),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ChairDeleteUpdate()),
+            );
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.logout, color: Colors.redAccent),
           title: Text('Logout', style: TextStyle(color: Colors.redAccent)),
           onTap: () async {
             Navigator.pop(context);
