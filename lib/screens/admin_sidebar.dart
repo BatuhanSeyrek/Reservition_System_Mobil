@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rezervasyon_mobil/screens/admin_employee.dart';
+import 'package:rezervasyon_mobil/screens/admin_update_screen.dart';
 import '../providers/auth_provider.dart';
 import 'about_screen.dart';
 import 'admin_chair.dart';
@@ -80,7 +81,17 @@ class SidebarContent extends StatelessWidget {
             );
           },
         ),
-
+        ListTile(
+          leading: Icon(Icons.person, color: Colors.black87),
+          title: Text('Admin Update', style: TextStyle(color: Colors.black87)),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => OwnerUpdateScreen()),
+            );
+          },
+        ),
         ListTile(
           leading: Icon(Icons.logout, color: Colors.redAccent),
           title: Text('Logout', style: TextStyle(color: Colors.redAccent)),
