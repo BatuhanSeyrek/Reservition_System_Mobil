@@ -80,6 +80,7 @@ class SidebarContent extends StatelessWidget {
             );
           },
         ),
+
         ListTile(
           leading: Icon(Icons.logout, color: Colors.redAccent),
           title: Text('Logout', style: TextStyle(color: Colors.redAccent)),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'admin_sidebar.dart';
 import 'footer.dart';
-import 'about_screen.dart';
+import 'admin_profile_screen.dart'; // Admin profil sayfası
 
 class AdminLayout extends StatelessWidget {
   final Widget body; // Sayfanın içeriği buraya gelecek
@@ -15,8 +15,6 @@ class AdminLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final admin = auth.admin!;
-    final storeName = admin.storeName;
-    final adminName = admin.adminName;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -34,7 +32,7 @@ class AdminLayout extends StatelessWidget {
           children: [
             SizedBox(width: 4),
             Text(
-              storeName,
+              admin.storeName,
               style: TextStyle(fontSize: 20, color: Colors.white),
             ),
             SizedBox(width: 6),
@@ -48,24 +46,22 @@ class AdminLayout extends StatelessWidget {
                 context: context,
                 position: RelativeRect.fromLTRB(1000, kToolbarHeight, 16, 0),
                 items: [
-                  PopupMenuItem(child: Text('About'), value: 'about'),
+                  PopupMenuItem(child: Text('Profile'), value: 'profile'),
                   PopupMenuItem(
                     child: Text(
-                      'Exit',
+                      'Logout',
                       style: TextStyle(color: Colors.redAccent),
                     ),
-                    value: 'exit',
+                    value: 'logout',
                   ),
                 ],
               ).then((value) async {
-                if (value == 'about') {
+                if (value == 'profile') {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => AboutScreen(isAdmin: true),
-                    ),
+                    MaterialPageRoute(builder: (_) => AdminProfileScreen()),
                   );
-                } else if (value == 'exit') {
+                } else if (value == 'logout') {
                   await auth.logout();
                   Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
                 }
@@ -73,7 +69,7 @@ class AdminLayout extends StatelessWidget {
             },
             child: Row(
               children: [
-                Text(adminName, style: TextStyle(color: Colors.white)),
+                Text(admin.adminName, style: TextStyle(color: Colors.white)),
                 SizedBox(width: 6),
                 Icon(Icons.person, color: Colors.redAccent),
                 SizedBox(width: 16),
