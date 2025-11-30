@@ -23,16 +23,24 @@ class AuthService {
 
   // User login
   Future<AuthResponse> loginUser(String username, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/user/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
+      );
 
-    if (response.statusCode == 200) {
-      return AuthResponse.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('User login failed');
+      print('Status code: ${response.statusCode}');
+      print('Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return AuthResponse.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('User login failed: ${response.body}');
+      }
+    } catch (e) {
+      print('Login error: $e');
+      rethrow;
     }
   }
 

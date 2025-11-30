@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/admin_dashboard_screen.dart';
 import 'package:rezervasyon_mobil/screens/admin_employee.dart';
 import 'package:rezervasyon_mobil/screens/admin_update_screen.dart';
 import '../providers/auth_provider.dart';
@@ -49,7 +50,7 @@ class SidebarContent extends StatelessWidget {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => AboutScreen(isAdmin: true)),
+              MaterialPageRoute(builder: (_) => AboutScreen()),
             );
           },
         ),
@@ -93,12 +94,17 @@ class SidebarContent extends StatelessWidget {
           },
         ),
         ListTile(
-          leading: Icon(Icons.logout, color: Colors.redAccent),
-          title: Text('Logout', style: TextStyle(color: Colors.redAccent)),
-          onTap: () async {
+          leading: Icon(Icons.dashboard, color: Colors.black87),
+          title: Text(
+            'Admin Reservation Dasboard',
+            style: TextStyle(color: Colors.black87),
+          ),
+          onTap: () {
             Navigator.pop(context);
-            await auth.logout();
-            Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AdminDashboardScreen()),
+            );
           },
         ),
       ],
