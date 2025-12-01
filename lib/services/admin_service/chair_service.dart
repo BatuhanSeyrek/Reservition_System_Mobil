@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../core/constants.dart';
-import '../models/chair_model.dart';
+import '../../core/constants.dart';
+import '../../models/admin_model/chair_model.dart';
 
 class ChairService {
   final String baseUrl = Constants.baseUrl;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rezervasyon_mobil/models/admin_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/admin_model.dart';
 import '../models/auth_response.dart';
 import '../services/auth_service.dart';
 import '../core/secure_storage.dart';

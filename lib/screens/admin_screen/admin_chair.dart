@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/chair_provider.dart';
-import '../models/chair_model.dart';
+import '../../providers/admin_provider/chair_provider.dart';
+import '../../models/admin_model/chair_model.dart';
 import 'admin_layout.dart';
 
 class ChairDeleteUpdate extends StatefulWidget {

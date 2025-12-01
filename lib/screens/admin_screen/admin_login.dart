@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rezervasyon_mobil/screens/about_screen.dart';
-import '../providers/auth_provider.dart';
-import 'user_login.dart';
+import '../../providers/auth_provider.dart';
+import '../user_login.dart';
 
 class AdminLogin extends StatefulWidget {
   @override

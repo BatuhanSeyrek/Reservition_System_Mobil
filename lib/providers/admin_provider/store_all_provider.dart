@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
-import 'package:rezervasyon_mobil/services/store_all_service.dart';
+import 'package:rezervasyon_mobil/services/admin_service/store_all_service.dart';
 
 class StoreAllProvider with ChangeNotifier {
   final SecureStorage _storage = SecureStorage();

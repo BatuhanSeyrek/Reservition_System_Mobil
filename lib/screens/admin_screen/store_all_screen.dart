@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/store_all_provider.dart';
-import '../models/store_all_model.dart';
+import '../../providers/admin_provider/store_all_provider.dart';
+import '../../models/admin_model/store_all_model.dart';
 
 class AllStoresScreen extends StatefulWidget {
   @override

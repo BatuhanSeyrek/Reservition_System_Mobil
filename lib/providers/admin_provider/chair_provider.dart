@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/chair_model.dart';
-import '../services/chair_service.dart';
-import '../core/secure_storage.dart';
+import '../../models/admin_model/chair_model.dart';
+import '../../services/admin_service/chair_service.dart';
+import '../../core/secure_storage.dart';
 
 class ChairProvider with ChangeNotifier {
   final SecureStorage _storage = SecureStorage();

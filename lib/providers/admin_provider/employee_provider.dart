@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
-import 'package:rezervasyon_mobil/models/employee_model.dart';
-import 'package:rezervasyon_mobil/services/employee_service.dart';
+import 'package:rezervasyon_mobil/models/admin_model/employee_model.dart';
+import 'package:rezervasyon_mobil/services/admin_service/employee_service.dart';
 
 class EmployeeProvider with ChangeNotifier {
   final SecureStorage _storage = SecureStorage();

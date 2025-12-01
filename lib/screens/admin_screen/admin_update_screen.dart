@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/admin_provider.dart';
-import '../models/admin_model.dart';
+import '../../providers/admin_provider/admin_provider.dart';
+import '../../models/admin_model/admin_model.dart';
 import 'admin_layout.dart';
 
 class OwnerUpdateScreen extends StatefulWidget {

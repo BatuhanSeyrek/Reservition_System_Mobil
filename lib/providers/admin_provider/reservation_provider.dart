@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/reservation_model.dart';
-import '../services/reservation_service.dart';
-import '../core/secure_storage.dart';
+import '../../models/admin_model/reservation_model.dart';
+import '../../services/admin_service/reservation_service.dart';
+import '../../core/secure_storage.dart';
 
 class ReservationProvider with ChangeNotifier {
   List<Reservation> reservations = [];

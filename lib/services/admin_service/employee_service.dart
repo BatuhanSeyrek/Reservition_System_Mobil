@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:rezervasyon_mobil/core/constants.dart';
-import 'package:rezervasyon_mobil/models/employee_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/employee_model.dart';
 
 class EmployeeService {
   final String baseUrl = Constants.baseUrl;

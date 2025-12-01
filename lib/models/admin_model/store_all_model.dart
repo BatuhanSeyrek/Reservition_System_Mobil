@@ -1,7 +1,7 @@
-import 'package:rezervasyon_mobil/models/admin_model.dart';
-import 'package:rezervasyon_mobil/models/chair_model.dart';
-import 'package:rezervasyon_mobil/models/employee_model.dart';
-import 'package:rezervasyon_mobil/models/store_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/admin_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/chair_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/employee_model.dart';
+import 'package:rezervasyon_mobil/models/admin_model/store_model.dart';
 
 class StoreAllModel {
   final AdminModel admin;

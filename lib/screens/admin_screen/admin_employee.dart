@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rezervasyon_mobil/screens/admin_layout.dart';
-import '../../models/employee_model.dart';
-import '../../providers/employee_provider.dart';
-import '../../providers/chair_provider.dart';
-import '../../models/chair_model.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
+import '../../models/admin_model/employee_model.dart';
+import '../../providers/admin_provider/employee_provider.dart';
+import '../../providers/admin_provider/chair_provider.dart';
+import '../../models/admin_model/chair_model.dart';
 
 class EmployeeDeleteUpdateScreen extends StatefulWidget {
   @override

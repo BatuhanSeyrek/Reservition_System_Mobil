@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rezervasyon_mobil/providers/admin_provider.dart';
-import 'package:rezervasyon_mobil/providers/employee_provider.dart';
-import 'package:rezervasyon_mobil/providers/reservation_provider.dart';
-import 'package:rezervasyon_mobil/providers/store_all_provider.dart';
+import 'package:rezervasyon_mobil/providers/admin_provider/admin_provider.dart';
+import 'package:rezervasyon_mobil/providers/admin_provider/employee_provider.dart';
+import 'package:rezervasyon_mobil/providers/admin_provider/reservation_provider.dart';
+import 'package:rezervasyon_mobil/providers/admin_provider/store_all_provider.dart';
+import 'package:rezervasyon_mobil/providers/user_provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
-import 'providers/chair_provider.dart';
+import 'providers/admin_provider/chair_provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdminProvider()),
         ChangeNotifierProvider(create: (_) => StoreAllProvider()),
         ChangeNotifierProvider(create: (_) => ReservationProvider()),
+        ChangeNotifierProvider(create: (_) => RegisterProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

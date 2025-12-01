@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rezervasyon_mobil/screens/admin_dashboard_screen.dart';
-import 'package:rezervasyon_mobil/screens/admin_employee.dart';
-import 'package:rezervasyon_mobil/screens/admin_update_screen.dart';
-import '../providers/auth_provider.dart';
-import 'about_screen.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_dashboard_screen.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_employee.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_update_screen.dart';
+import '../../providers/auth_provider.dart';
+import '../about_screen.dart';
 import 'admin_chair.dart';
 
 class SidebarContent extends StatelessWidget {

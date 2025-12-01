@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
-import 'package:rezervasyon_mobil/models/admin_model.dart';
-import 'package:rezervasyon_mobil/services/admin_service.dart';
+import 'package:rezervasyon_mobil/models/admin_model/admin_model.dart';
+import 'package:rezervasyon_mobil/services/admin_service/admin_service.dart';
 
 class AdminProvider with ChangeNotifier {
   final SecureStorage _storage = SecureStorage();

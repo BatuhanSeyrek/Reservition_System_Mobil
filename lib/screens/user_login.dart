@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/user_register.dart';
 import '../providers/auth_provider.dart';
-import 'admin_login.dart';
+import 'admin_screen/admin_login.dart';
 
 class UserLogin extends StatefulWidget {
   @override
@@ -169,7 +170,10 @@ class _UserLoginState extends State<UserLogin> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(context, '/userRegister');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => UserRegister()),
+                            );
                           },
                           child: Text(
                             'Kayıt Ol',

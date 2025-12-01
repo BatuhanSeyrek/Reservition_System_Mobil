@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import 'admin_layout.dart'; // AdminLayout
+import 'admin_screen/admin_layout.dart'; // AdminLayout
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({Key? key}) : super(key: key);
