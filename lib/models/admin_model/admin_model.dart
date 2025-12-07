@@ -7,7 +7,9 @@ class AdminModel {
   final bool status;
   final String startTime;
   final String endTime;
-  final String password; // <-- yeni alan, opsiyonel olarak gönderilebilir
+  final String password; // opsiyonel
+  final String referenceId; // opsiyonel
+  final bool referenceStatus; // true = girilmiş, false = girilmemiş
 
   AdminModel({
     required this.id,
@@ -18,7 +20,9 @@ class AdminModel {
     required this.status,
     required this.startTime,
     required this.endTime,
-    this.password = '', // varsayılan boş
+    this.password = '',
+    this.referenceId = '',
+    this.referenceStatus = false, // default: false
   });
 
   factory AdminModel.fromJson(Map<String, dynamic> json) {
@@ -31,7 +35,9 @@ class AdminModel {
       status: json['status'],
       startTime: json['startTime'],
       endTime: json['endTime'],
-      password: json['password'] ?? '', // opsiyonel
+      password: json['password'] ?? '',
+      referenceId: json['referenceId'] ?? '',
+      referenceStatus: json['referenceId'] != null && json['referenceId'] != '',
     );
   }
 
@@ -47,9 +53,8 @@ class AdminModel {
       'endTime': endTime,
     };
 
-    if (password.isNotEmpty) {
-      data['password'] = password; // sadece doluysa ekle
-    }
+    if (password.isNotEmpty) data['password'] = password;
+    if (referenceId.isNotEmpty) data['referenceId'] = referenceId;
 
     return data;
   }

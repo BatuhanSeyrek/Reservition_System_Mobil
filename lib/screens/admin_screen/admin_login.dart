@@ -1,24 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rezervasyon_mobil/screens/about_screen.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_update_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../user_login.dart';
+import '../about_screen.dart';
 
 class AdminLogin extends StatefulWidget {
   @override
-  _AdminLoginState createState() => _AdminLoginState();
+  _OwnerLoginScreenState createState() => _OwnerLoginScreenState();
 }
 
-class _AdminLoginState extends State<AdminLogin> {
+class _OwnerLoginScreenState extends State<AdminLogin> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool isLoading = false;
+
+  void handleLogin() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.loginAdmin(
+        _usernameController.text,
+        _passwordController.text,
+      );
+
+      final admin = authProvider.admin;
+
+      if (admin == null) {
+        throw Exception("Admin bilgisi alınamadı");
+      }
+
+      if (admin.referenceStatus == false) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => OwnerUpdateScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AboutScreen()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Giriş başarısız! ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           // Arka plan
@@ -86,7 +127,7 @@ class _AdminLoginState extends State<AdminLogin> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Admin Giriş',
+                          'Admin Girişi',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -101,7 +142,7 @@ class _AdminLoginState extends State<AdminLogin> {
                     TextField(
                       controller: _usernameController,
                       decoration: InputDecoration(
-                        labelText: 'Kullanıcı Adı',
+                        labelText: 'Admin Kullanıcı Adı',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -126,26 +167,7 @@ class _AdminLoginState extends State<AdminLogin> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          try {
-                            await context.read<AuthProvider>().loginAdmin(
-                              _usernameController.text,
-                              _passwordController.text,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Giriş başarılı!')),
-                            );
-                            // ⭐ AdminHome'a yönlendirme
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => AboutScreen()),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Giriş başarısız!')),
-                            );
-                          }
-                        },
+                        onPressed: isLoading ? null : handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           padding: EdgeInsets.symmetric(vertical: 16),
@@ -153,17 +175,19 @@ class _AdminLoginState extends State<AdminLogin> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text(
-                          'Giriş Yap',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child:
+                            isLoading
+                                ? CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                  'Giriş Yap',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                       ),
                     ),
-                    SizedBox(height: 20),
                   ],
                 ),
               ),

@@ -26,6 +26,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   Future<void> fetchAdminData() async {
     final provider = Provider.of<AdminProvider>(context, listen: false);
     await provider.fetchMyAdmin();
+
     if (provider.admins.isNotEmpty) {
       final a = provider.admins.first;
       setState(() {
@@ -33,6 +34,13 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
         password = '';
         isLoading = false;
       });
+
+      // Reference ID yoksa modal göster
+      if (!a.referenceStatus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showReferenceModal();
+        });
+      }
     } else {
       setState(() {
         isLoading = false;
@@ -40,9 +48,31 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
     }
   }
 
+  void showReferenceModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // kullanıcı modal dışında tıklayamaz
+      builder:
+          (context) => AlertDialog(
+            title: Text('Hoşgeldiniz!'),
+            content: Text(
+              'Sistemimize ilk girişinizde Reference ID\'niz bulunmamaktadır. '
+              'Bu ID sayesinde müşterileriniz sizi bulacak. Lütfen bir kere mahsus Reference ID giriniz.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Tamam'),
+              ),
+            ],
+          ),
+    );
+  }
+
   void handleSubmit() async {
     if (_formKey.currentState!.validate() && admin != null) {
       final provider = Provider.of<AdminProvider>(context, listen: false);
+
       try {
         final updatedAdmin = AdminModel(
           id: admin!.id,
@@ -53,6 +83,8 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
           status: admin!.status,
           startTime: admin!.startTime,
           endTime: admin!.endTime,
+          password: password.isNotEmpty ? password : '', // opsiyonel
+          referenceId: admin!.referenceId,
         );
 
         await provider.updateAdmin(updatedAdmin);
@@ -88,7 +120,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: Colors.grey[200], // soft gri
+              color: Colors.grey[200],
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child:
@@ -112,7 +144,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                 style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.redAccent, // kırmızı ton
+                                  color: Colors.redAccent,
                                 ),
                               ),
                               SizedBox(height: 24),
@@ -139,6 +171,8 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                         status: admin!.status,
                                         startTime: admin!.startTime,
                                         endTime: admin!.endTime,
+                                        referenceId: admin!.referenceId,
+                                        referenceStatus: admin!.referenceStatus,
                                       );
                                     }),
                                 validator:
@@ -154,8 +188,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                 initialValue: password,
                                 decoration: InputDecoration(
                                   labelText: 'Password',
-                                  hintText:
-                                      'Şifre sizin güvenliğiniz için görünmüyor',
+                                  hintText: 'Boş bırakırsanız değişmez',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -197,6 +230,8 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                         status: admin!.status,
                                         startTime: admin!.startTime,
                                         endTime: admin!.endTime,
+                                        referenceId: admin!.referenceId,
+                                        referenceStatus: admin!.referenceStatus,
                                       );
                                     }),
                                 validator:
@@ -229,6 +264,8 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                         status: admin!.status,
                                         startTime: admin!.startTime,
                                         endTime: admin!.endTime,
+                                        referenceId: admin!.referenceId,
+                                        referenceStatus: admin!.referenceStatus,
                                       );
                                     }),
                                 validator:
@@ -236,6 +273,46 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                         value!.isEmpty
                                             ? 'Boş bırakılamaz'
                                             : null,
+                              ),
+                              SizedBox(height: 16),
+
+                              // Reference ID
+                              TextFormField(
+                                initialValue: admin!.referenceId,
+                                decoration: InputDecoration(
+                                  labelText: 'Reference ID',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor:
+                                      admin!.referenceStatus
+                                          ? Colors.grey[300]
+                                          : Colors.grey[50],
+                                ),
+                                readOnly: admin!.referenceStatus,
+                                onChanged:
+                                    (value) => setState(() {
+                                      admin = AdminModel(
+                                        id: admin!.id,
+                                        adminName: admin!.adminName,
+                                        phoneNumber: admin!.phoneNumber,
+                                        storeName: admin!.storeName,
+                                        chairCount: admin!.chairCount,
+                                        status: admin!.status,
+                                        startTime: admin!.startTime,
+                                        endTime: admin!.endTime,
+                                        referenceId: value,
+                                        referenceStatus: value.isNotEmpty,
+                                      );
+                                    }),
+                                validator: (value) {
+                                  if (!admin!.referenceStatus &&
+                                      (value == null || value.isEmpty)) {
+                                    return 'Reference ID boş olamaz';
+                                  }
+                                  return null;
+                                },
                               ),
                               SizedBox(height: 24),
 

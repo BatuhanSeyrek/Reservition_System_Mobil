@@ -7,14 +7,14 @@ plugins {
 
 android {
       namespace = "com.example.rezervasyon_mobil"
-    compileSdk = 34
+    compileSdk = 35
 
     ndkVersion = "27.0.12077973"   // <-- BUNU EKLİYORSUN
 
     defaultConfig {
         applicationId = "com.example.rezervasyon_mobil"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
