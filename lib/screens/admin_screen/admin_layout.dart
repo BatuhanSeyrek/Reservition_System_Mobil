@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rezervasyon_mobil/screens/user_profile_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../footer.dart';
 import 'admin_profile_screen.dart';
@@ -56,13 +57,13 @@ class _AppLayoutState extends State<AppLayout> {
         showSidebar = false;
         storeName = storedName;
       }
-      // Normal kullanıcı (guest)
+      // Normal kullanıcı
       else if (auth.user != null) {
         isAdmin = false;
         isReference = false;
         displayName = auth.user!.name;
         showSidebar = false;
-        storeName = null; // sol taraf MyApp
+        storeName = null;
       }
     });
   }
@@ -75,10 +76,19 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   void handleAbout(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
     if (isAdmin) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => AdminProfileScreen()),
+      );
+    } else if (!isAdmin && !isReference && auth.user != null) {
+      final token = auth.user!.token;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => UserProfileScreen(token: token)),
       );
     }
   }
@@ -109,7 +119,8 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget? buildRightWidget(BuildContext context) {
-    if (isAdmin) {
+    // Admin veya normal kullanıcı
+    if (isAdmin || (!isReference && displayName != null)) {
       return GestureDetector(
         onTap: () {
           showMenu(
@@ -148,18 +159,6 @@ class _AppLayoutState extends State<AppLayout> {
             Icon(Icons.person, color: Colors.redAccent, size: 20),
           ],
         ),
-      );
-    } else if (!isReference && displayName != null) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            displayName!,
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-          SizedBox(width: 6),
-          Icon(Icons.person, color: Colors.redAccent, size: 20),
-        ],
       );
     }
     return null; // Reference ID kullanıcı: sağda hiçbir şey

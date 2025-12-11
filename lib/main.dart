@@ -7,7 +7,9 @@ import 'package:rezervasyon_mobil/providers/admin_provider/store_all_provider.da
 import 'package:rezervasyon_mobil/providers/reference_chair_provider.dart';
 import 'package:rezervasyon_mobil/providers/reference_login_provider.dart';
 import 'package:rezervasyon_mobil/providers/user_provider.dart';
+import 'package:rezervasyon_mobil/providers/user_provideriki.dart';
 import 'package:rezervasyon_mobil/screens/reference_id_login.dart';
+import 'package:rezervasyon_mobil/services/user_service/user_service.dart';
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'providers/admin_provider/chair_provider.dart';
@@ -19,6 +21,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final userService = UserService();
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -30,6 +33,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => ReferenceLoginProvider()),
         ChangeNotifierProvider(create: (_) => RefenceChairProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
