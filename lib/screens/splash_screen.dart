@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/reference_id_login.dart';
 import '../providers/auth_provider.dart';
-
-import 'user_login.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -20,20 +19,13 @@ class _SplashScreenState extends State<SplashScreen> {
     final authProvider = context.read<AuthProvider>();
     bool isLoggedIn = await authProvider.tryAutoLogin();
 
-    await Future.delayed(Duration(seconds: 2)); // Splash bekletme
+    await Future.delayed(Duration(seconds: 2));
 
-    if (isLoggedIn) {
-      // İstersen burada admin/user ayrımı yapılabilir
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => UserLogin()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => UserLogin()),
-      );
-    }
+    // Her durumda Reference Login sayfasını aç
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => ReferenceIdLoginScreen()),
+    );
   }
 
   @override

@@ -21,6 +21,29 @@ class AuthService {
     }
   }
 
+  // Reference ID Login
+  Future<Map<String, dynamic>> loginWithReferenceId(String referenceId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/refenceIdLogin'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'referenceId': referenceId}),
+      );
+
+      print('Status code (reference): ${response.statusCode}');
+      print('Body (reference): ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Reference ID login failed: ${response.body}');
+      }
+    } catch (e) {
+      print('Reference Login error: $e');
+      rethrow;
+    }
+  }
+
   // User login
   Future<AuthResponse> loginUser(String username, String password) async {
     try {

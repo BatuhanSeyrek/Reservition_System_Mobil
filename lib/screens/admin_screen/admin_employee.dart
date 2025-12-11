@@ -254,7 +254,7 @@ class _EmployeeDeleteUpdateScreenState
       ),
     );
 
-    return AdminLayout(
+    return AppLayout(
       body: Padding(
         padding: EdgeInsets.all(33),
         child: LayoutBuilder(

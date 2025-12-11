@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/about_screen.dart';
 import 'package:rezervasyon_mobil/screens/user_register.dart';
 import '../providers/auth_provider.dart';
 import 'admin_screen/admin_login.dart';
@@ -134,6 +135,10 @@ class _UserLoginState extends State<UserLogin> {
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Giriş başarılı!')),
+                            );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => AboutScreen()),
                             );
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(

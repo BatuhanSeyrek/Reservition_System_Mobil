@@ -105,10 +105,10 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return AdminLayout(body: Center(child: CircularProgressIndicator()));
+      return AppLayout(body: Center(child: CircularProgressIndicator()));
     }
 
-    return AdminLayout(
+    return AppLayout(
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
         child: Center(

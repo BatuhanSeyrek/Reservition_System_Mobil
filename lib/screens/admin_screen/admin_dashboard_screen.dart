@@ -123,7 +123,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AdminLayout(
+    return AppLayout(
       body: Consumer<ReservationProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading)

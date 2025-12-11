@@ -10,7 +10,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    return AdminLayout(
+    return AppLayout(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(

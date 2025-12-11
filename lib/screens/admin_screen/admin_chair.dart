@@ -387,7 +387,7 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
       ),
     );
 
-    return AdminLayout(
+    return AppLayout(
       body: Padding(
         padding: EdgeInsets.all(33),
         child: LayoutBuilder(

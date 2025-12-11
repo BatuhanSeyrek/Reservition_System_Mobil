@@ -11,7 +11,7 @@ class AdminProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final admin = auth.admin;
 
-    return AdminLayout(
+    return AppLayout(
       body:
           admin == null
               ? const Center(child: Text("Admin bilgisi bulunamadı"))
