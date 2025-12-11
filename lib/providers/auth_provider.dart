@@ -25,6 +25,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearUserAndAdmin() {
+    _user = null;
+    _admin = null;
+    notifyListeners();
+  }
+
   // User login
   Future<void> loginUser(String username, String password) async {
     _user = await _authService.loginUser(username, password);

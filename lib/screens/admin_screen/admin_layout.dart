@@ -38,30 +38,40 @@ class _AppLayoutState extends State<AppLayout> {
 
     if (!mounted) return;
 
+    // Önceki login bilgilerini temizle Reference ID için
+    if (auth.user == null && storedName != null && storedName.isNotEmpty) {
+      auth.clearUserAndAdmin();
+    }
+
     setState(() {
-      // Admin kontrolü
       if (auth.admin != null) {
+        // Admin login
         isAdmin = true;
         isReference = false;
         displayName = auth.admin!.adminName;
         showSidebar = true;
         storeName = storedName;
-      }
-      // Reference ID kontrolü
-      else if (auth.user == null &&
+      } else if (auth.user == null &&
           storedName != null &&
           storedName.isNotEmpty) {
+        // Reference ID login
         isAdmin = false;
         isReference = true;
-        displayName = null; // sağda isim gözükmesin
+        displayName = null;
         showSidebar = false;
         storeName = storedName;
-      }
-      // Normal kullanıcı
-      else if (auth.user != null) {
+      } else if (auth.user != null) {
+        // Normal user login
         isAdmin = false;
         isReference = false;
         displayName = auth.user!.name;
+        showSidebar = false;
+        storeName = null;
+      } else {
+        // Hiçbir login yok
+        isAdmin = false;
+        isReference = false;
+        displayName = null;
         showSidebar = false;
         storeName = null;
       }
@@ -85,7 +95,6 @@ class _AppLayoutState extends State<AppLayout> {
       );
     } else if (!isAdmin && !isReference && auth.user != null) {
       final token = auth.user!.token;
-
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => UserProfileScreen(token: token)),
@@ -94,22 +103,23 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget buildLeftWidget() {
+    final auth = context.read<AuthProvider>();
     if (isAdmin || isReference) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            storeName ?? '',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            storeName ?? auth.admin!.storeName,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
-          SizedBox(width: 6),
-          Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
+          const SizedBox(width: 6),
+          const Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
         ],
       );
     } else {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+        children: const [
           Text('MyApp', style: TextStyle(color: Colors.white, fontSize: 18)),
           SizedBox(width: 6),
           Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
@@ -119,7 +129,6 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget? buildRightWidget(BuildContext context) {
-    // Admin veya normal kullanıcı
     if (isAdmin || (!isReference && displayName != null)) {
       return GestureDetector(
         onTap: () {
@@ -131,7 +140,7 @@ class _AppLayoutState extends State<AppLayout> {
               16,
               0,
             ),
-            items: [
+            items: const [
               PopupMenuItem(child: Text('About'), value: 'about'),
               PopupMenuItem(
                 child: Text(
@@ -153,15 +162,15 @@ class _AppLayoutState extends State<AppLayout> {
           children: [
             Text(
               displayName ?? '',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
-            SizedBox(width: 6),
-            Icon(Icons.person, color: Colors.redAccent, size: 20),
+            const SizedBox(width: 6),
+            const Icon(Icons.person, color: Colors.redAccent, size: 20),
           ],
         ),
       );
     }
-    return null; // Reference ID kullanıcı: sağda hiçbir şey
+    return null;
   }
 
   @override
@@ -178,7 +187,7 @@ class _AppLayoutState extends State<AppLayout> {
         leading:
             (showSidebar && isAdmin)
                 ? IconButton(
-                  icon: Icon(Icons.menu, color: Colors.white, size: 28),
+                  icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                   onPressed: () => _scaffoldKey.currentState!.openDrawer(),
                 )
                 : null,
