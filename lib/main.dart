@@ -6,6 +6,7 @@ import 'package:rezervasyon_mobil/providers/admin_provider/reservation_provider.
 import 'package:rezervasyon_mobil/providers/admin_provider/store_all_provider.dart';
 import 'package:rezervasyon_mobil/providers/reference_chair_provider.dart';
 import 'package:rezervasyon_mobil/providers/reference_login_provider.dart';
+import 'package:rezervasyon_mobil/providers/store_provider.dart';
 import 'package:rezervasyon_mobil/providers/user_provider.dart';
 import 'package:rezervasyon_mobil/providers/user_provideriki.dart';
 import 'package:rezervasyon_mobil/screens/reference_id_login.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReferenceLoginProvider()),
         ChangeNotifierProvider(create: (_) => RefenceChairProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => StoreProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

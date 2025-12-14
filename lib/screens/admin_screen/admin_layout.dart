@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rezervasyon_mobil/screens/user_profile_screen.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_profile_screen.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
 import '../../providers/auth_provider.dart';
 import '../footer.dart';
-import 'admin_profile_screen.dart';
-import 'admin_sidebar.dart';
+import '../user_sidebar.dart';
+import '../user_profile_screen.dart' as user_profile; // User Profile import
 
 class AppLayout extends StatefulWidget {
   final Widget body;
 
-  AppLayout({required this.body});
+  const AppLayout({required this.body, Key? key}) : super(key: key);
 
   @override
   _AppLayoutState createState() => _AppLayoutState();
@@ -38,11 +39,6 @@ class _AppLayoutState extends State<AppLayout> {
 
     if (!mounted) return;
 
-    // Önceki login bilgilerini temizle Reference ID için
-    if (auth.user == null && storedName != null && storedName.isNotEmpty) {
-      auth.clearUserAndAdmin();
-    }
-
     setState(() {
       if (auth.admin != null) {
         // Admin login
@@ -54,7 +50,7 @@ class _AppLayoutState extends State<AppLayout> {
       } else if (auth.user == null &&
           storedName != null &&
           storedName.isNotEmpty) {
-        // Reference ID login
+        // Reference login
         isAdmin = false;
         isReference = true;
         displayName = null;
@@ -65,14 +61,7 @@ class _AppLayoutState extends State<AppLayout> {
         isAdmin = false;
         isReference = false;
         displayName = auth.user!.name;
-        showSidebar = false;
-        storeName = null;
-      } else {
-        // Hiçbir login yok
-        isAdmin = false;
-        isReference = false;
-        displayName = null;
-        showSidebar = false;
+        showSidebar = true;
         storeName = null;
       }
     });
@@ -85,31 +74,32 @@ class _AppLayoutState extends State<AppLayout> {
     Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
   }
 
-  void handleAbout(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-
+  void handleAbout(BuildContext context) async {
     if (isAdmin) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => AdminProfileScreen()),
+        MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
       );
-    } else if (!isAdmin && !isReference && auth.user != null) {
-      final token = auth.user!.token;
+    } else if (!isReference && displayName != null) {
+      // Kullanıcı token’ı al
+      final token = await secureStorage.read(key: "token") ?? "";
+
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => UserProfileScreen(token: token)),
+        MaterialPageRoute(
+          builder: (_) => user_profile.UserProfileScreen(token: token),
+        ),
       );
     }
   }
 
   Widget buildLeftWidget() {
-    final auth = context.read<AuthProvider>();
     if (isAdmin || isReference) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            storeName ?? auth.admin!.storeName,
+            storeName ?? '',
             style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
           const SizedBox(width: 6),
@@ -141,13 +131,13 @@ class _AppLayoutState extends State<AppLayout> {
               0,
             ),
             items: const [
-              PopupMenuItem(child: Text('About'), value: 'about'),
+              PopupMenuItem(value: 'about', child: Text('Profilim')),
               PopupMenuItem(
+                value: 'logout',
                 child: Text(
-                  'Logout',
+                  'Çıkış Yap',
                   style: TextStyle(color: Colors.redAccent),
                 ),
-                value: 'logout',
               ),
             ],
           ).then((value) {
@@ -158,19 +148,18 @@ class _AppLayoutState extends State<AppLayout> {
           });
         },
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               displayName ?? '',
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.person, color: Colors.redAccent, size: 20),
+            const Icon(Icons.person, color: Colors.redAccent),
           ],
         ),
       );
     }
-    return null;
+    return null; // Reference: sağda hiçbir şey yok
   }
 
   @override
@@ -178,14 +167,19 @@ class _AppLayoutState extends State<AppLayout> {
     return Scaffold(
       key: _scaffoldKey,
       drawer:
-          (showSidebar && isAdmin)
-              ? Drawer(child: Material(elevation: 16, child: AdminSidebar()))
+          showSidebar
+              ? Drawer(
+                child: Material(
+                  elevation: 16,
+                  child: isAdmin ? AdminSidebar() : UserSidebar(),
+                ),
+              )
               : null,
       appBar: AppBar(
         backgroundColor: Colors.grey[900],
         leadingWidth: 40,
         leading:
-            (showSidebar && isAdmin)
+            showSidebar
                 ? IconButton(
                   icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                   onPressed: () => _scaffoldKey.currentState!.openDrawer(),

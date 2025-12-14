@@ -11,7 +11,8 @@ class UserProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => UserProvider()..loadUser(token),
+      create:
+          (_) => UserProvider()..loadUser(token), // Token ile kullanıcıyı yükle
       child: Consumer<UserProvider>(
         builder: (context, userProvider, _) {
           final user = userProvider.user;
@@ -26,6 +27,7 @@ class UserProfileScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
+                          // Profil fotoğrafı (ilk harf)
                           CircleAvatar(
                             radius: 45,
                             backgroundColor: Colors.black87,
@@ -38,6 +40,7 @@ class UserProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 15),
+                          // Kullanıcı adı
                           Text(
                             user.userName,
                             style: const TextStyle(
@@ -46,6 +49,7 @@ class UserProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 30),
+                          // Bilgi kartları
                           buildInfoCard("Email", user.email),
                           buildInfoCard("Telefon", user.phoneNumber ?? "-"),
                           buildInfoCard(
@@ -61,6 +65,7 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
+  // Tek bir bilgi kartı bileşeni
   Widget buildInfoCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
