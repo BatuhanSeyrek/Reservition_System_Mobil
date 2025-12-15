@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rezervasyon_mobil/screens/user_update_screen.dart';
 
 import 'all_stores_screen.dart';
 
@@ -40,12 +41,12 @@ class UserSidebar extends StatelessWidget {
 
         ListTile(
           leading: const Icon(Icons.person),
-          title: const Text('Profile'),
+          title: const Text('User Update'),
           onTap: () {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => UserProfileScreen()),
+              MaterialPageRoute(builder: (_) => UserUpdateScreen()),
             );
           },
         ),
