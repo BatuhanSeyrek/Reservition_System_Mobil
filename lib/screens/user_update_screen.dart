@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:rezervasyon_mobil/providers/user_provideriki.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
+import 'package:rezervasyon_mobil/screens/user_sidebar.dart'; // ✅ EKLENDİ
 
 class UserUpdateScreen extends StatefulWidget {
   const UserUpdateScreen({Key? key}) : super(key: key);
@@ -160,15 +161,18 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
           ),
         ),
       ),
+
+      // 🔥 USER BOTTOM BAR BURADA
+      bottomBar: const UserBottomBar(currentIndex: 2),
     );
   }
 
   Widget _input(String label, TextEditingController c) {
     return TextField(
       controller: c,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+      decoration: const InputDecoration(
+        labelText: 'Label',
+        border: OutlineInputBorder(),
       ),
     );
   }

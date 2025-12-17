@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
 import '../../providers/admin_provider/admin_provider.dart';
 import '../../models/admin_model/admin_model.dart';
 import 'admin_layout.dart';
@@ -14,6 +15,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   AdminModel? admin;
   bool isLoading = true;
   String password = '';
+  bool _showReferenceHint = false; // Reference ID uyarısı kontrolü
 
   @override
   void initState() {
@@ -33,9 +35,9 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
         admin = a;
         password = '';
         isLoading = false;
+        _showReferenceHint = !a.referenceStatus; // reference yoksa hint göster
       });
 
-      // Reference ID yoksa modal göster
       if (!a.referenceStatus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           showReferenceModal();
@@ -51,7 +53,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   void showReferenceModal() {
     showDialog(
       context: context,
-      barrierDismissible: false, // kullanıcı modal dışında tıklayamaz
+      barrierDismissible: false,
       builder:
           (context) => AlertDialog(
             title: Text('Hoşgeldiniz!'),
@@ -83,7 +85,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
           status: admin!.status,
           startTime: admin!.startTime,
           endTime: admin!.endTime,
-          password: password.isNotEmpty ? password : '', // opsiyonel
+          password: password.isNotEmpty ? password : '',
           referenceId: admin!.referenceId,
         );
 
@@ -105,7 +107,11 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return AppLayout(body: Center(child: CircularProgressIndicator()));
+      return AppLayout(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF9C1132)),
+        ),
+      );
     }
 
     return AppLayout(
@@ -120,7 +126,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: Colors.grey[200],
+              color: Color(0xFFF5F5F5),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child:
@@ -144,57 +150,26 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                 style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.redAccent,
+                                  color: Color(0xFF9C1132),
                                 ),
                               ),
                               SizedBox(height: 24),
 
                               // Admin Name
-                              TextFormField(
+                              _buildTextField(
+                                label: 'Admin Name',
                                 initialValue: admin!.adminName,
-                                decoration: InputDecoration(
-                                  labelText: 'Admin Name',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
                                 onChanged:
-                                    (value) => setState(() {
-                                      admin = AdminModel(
-                                        id: admin!.id,
-                                        adminName: value,
-                                        phoneNumber: admin!.phoneNumber,
-                                        storeName: admin!.storeName,
-                                        chairCount: admin!.chairCount,
-                                        status: admin!.status,
-                                        startTime: admin!.startTime,
-                                        endTime: admin!.endTime,
-                                        referenceId: admin!.referenceId,
-                                        referenceStatus: admin!.referenceStatus,
-                                      );
-                                    }),
-                                validator:
-                                    (value) =>
-                                        value!.isEmpty
-                                            ? 'Boş bırakılamaz'
-                                            : null,
+                                    (value) => _updateAdmin(adminName: value),
                               ),
+
                               SizedBox(height: 16),
 
                               // Password
-                              TextFormField(
+                              _buildTextField(
+                                label: 'Password',
                                 initialValue: password,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                  hintText: 'Boş bırakırsanız değişmez',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
+                                hintText: 'Boş bırakırsanız değişmez',
                                 obscureText: true,
                                 onChanged: (value) => password = value,
                                 validator: (value) {
@@ -206,114 +181,74 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                   return null;
                                 },
                               ),
+
                               SizedBox(height: 16),
 
                               // Store Name
-                              TextFormField(
+                              _buildTextField(
+                                label: 'Store Name',
                                 initialValue: admin!.storeName,
-                                decoration: InputDecoration(
-                                  labelText: 'Store Name',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
                                 onChanged:
-                                    (value) => setState(() {
-                                      admin = AdminModel(
-                                        id: admin!.id,
-                                        adminName: admin!.adminName,
-                                        phoneNumber: admin!.phoneNumber,
-                                        storeName: value,
-                                        chairCount: admin!.chairCount,
-                                        status: admin!.status,
-                                        startTime: admin!.startTime,
-                                        endTime: admin!.endTime,
-                                        referenceId: admin!.referenceId,
-                                        referenceStatus: admin!.referenceStatus,
-                                      );
-                                    }),
-                                validator:
-                                    (value) =>
-                                        value!.isEmpty
-                                            ? 'Boş bırakılamaz'
-                                            : null,
+                                    (value) => _updateAdmin(storeName: value),
                               ),
+
                               SizedBox(height: 16),
 
                               // Phone Number
-                              TextFormField(
+                              _buildTextField(
+                                label: 'Phone Number',
                                 initialValue: admin!.phoneNumber,
-                                decoration: InputDecoration(
-                                  labelText: 'Phone Number',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                ),
                                 onChanged:
-                                    (value) => setState(() {
-                                      admin = AdminModel(
-                                        id: admin!.id,
-                                        adminName: admin!.adminName,
-                                        phoneNumber: value,
-                                        storeName: admin!.storeName,
-                                        chairCount: admin!.chairCount,
-                                        status: admin!.status,
-                                        startTime: admin!.startTime,
-                                        endTime: admin!.endTime,
-                                        referenceId: admin!.referenceId,
-                                        referenceStatus: admin!.referenceStatus,
-                                      );
-                                    }),
-                                validator:
-                                    (value) =>
-                                        value!.isEmpty
-                                            ? 'Boş bırakılamaz'
-                                            : null,
+                                    (value) => _updateAdmin(phoneNumber: value),
                               ),
+
                               SizedBox(height: 16),
 
-                              // Reference ID
-                              TextFormField(
-                                initialValue: admin!.referenceId,
-                                decoration: InputDecoration(
-                                  labelText: 'Reference ID',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor:
-                                      admin!.referenceStatus
-                                          ? Colors.grey[300]
-                                          : Colors.grey[50],
-                                ),
-                                readOnly: admin!.referenceStatus,
-                                onChanged:
-                                    (value) => setState(() {
-                                      admin = AdminModel(
-                                        id: admin!.id,
-                                        adminName: admin!.adminName,
-                                        phoneNumber: admin!.phoneNumber,
-                                        storeName: admin!.storeName,
-                                        chairCount: admin!.chairCount,
-                                        status: admin!.status,
-                                        startTime: admin!.startTime,
-                                        endTime: admin!.endTime,
+                              // Reference ID + hint
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildTextField(
+                                    label: 'Reference ID',
+                                    initialValue: admin!.referenceId,
+                                    readOnly: admin!.referenceStatus,
+                                    fillColor:
+                                        admin!.referenceStatus
+                                            ? Color(0xFFE0E0E0)
+                                            : Colors.grey[50],
+                                    onChanged: (value) {
+                                      _updateAdmin(
                                         referenceId: value,
                                         referenceStatus: value.isNotEmpty,
                                       );
-                                    }),
-                                validator: (value) {
-                                  if (!admin!.referenceStatus &&
-                                      (value == null || value.isEmpty)) {
-                                    return 'Reference ID boş olamaz';
-                                  }
-                                  return null;
-                                },
+                                      if (value.isNotEmpty) {
+                                        setState(() {
+                                          _showReferenceHint = false;
+                                        });
+                                      }
+                                    },
+                                    validator: (value) {
+                                      if (!admin!.referenceStatus &&
+                                          (value == null || value.isEmpty)) {
+                                        return 'Reference ID boş olamaz';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  if (_showReferenceHint)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        'Reference ID sadece bir kere girilebilir.',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
+
                               SizedBox(height: 24),
 
                               // Update Button
@@ -326,7 +261,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    backgroundColor: Colors.redAccent,
+                                    backgroundColor: Color(0xFF821034),
                                   ),
                                   child: Text(
                                     'Güncelle',
@@ -345,6 +280,58 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
           ),
         ),
       ),
+      bottomBar: const AdminBottomBar(currentIndex: 3),
     );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    String? initialValue,
+    String? hintText,
+    bool obscureText = false,
+    bool readOnly = false,
+    Color? fillColor,
+    Function(String)? onChanged,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      initialValue: initialValue,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hintText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: fillColor ?? Colors.grey[50],
+      ),
+      obscureText: obscureText,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      validator:
+          validator ?? (value) => value!.isEmpty ? 'Boş bırakılamaz' : null,
+    );
+  }
+
+  void _updateAdmin({
+    String? adminName,
+    String? phoneNumber,
+    String? storeName,
+    String? referenceId,
+    bool? referenceStatus,
+  }) {
+    if (admin == null) return;
+    setState(() {
+      admin = AdminModel(
+        id: admin!.id,
+        adminName: adminName ?? admin!.adminName,
+        phoneNumber: phoneNumber ?? admin!.phoneNumber,
+        storeName: storeName ?? admin!.storeName,
+        chairCount: admin!.chairCount,
+        status: admin!.status,
+        startTime: admin!.startTime,
+        endTime: admin!.endTime,
+        referenceId: referenceId ?? admin!.referenceId,
+        referenceStatus: referenceStatus ?? admin!.referenceStatus,
+      );
+    });
   }
 }

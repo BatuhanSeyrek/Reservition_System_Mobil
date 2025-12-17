@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
+import 'package:rezervasyon_mobil/screens/user_sidebar.dart';
 import '../../providers/user_chair_provider.dart';
 
 class ChairAvailabilityScreen extends StatefulWidget {
@@ -78,7 +79,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
               color: const Color(0xFFF9F5F9),
               child: Column(
                 children: [
-                  // --- 1. SABİT HEADER KISMI ---
+                  // --- HEADER ---
                   Container(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                     child: Container(
@@ -161,8 +162,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                       ),
                     ),
                   ),
-
-                  // --- 2. KAYDIRILABİLİR LİSTE (DAHA İNCE) ---
+                  // --- SLOT LİSTESİ ---
                   Expanded(
                     child:
                         slots.isEmpty
@@ -192,9 +192,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                                           )
                                           : null,
                                   child: Container(
-                                    // Margin'i azalttım (Daha yakın duracaklar)
                                     margin: const EdgeInsets.only(bottom: 8),
-                                    // Padding'i azalttım (Kutular daha ince olacak)
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
                                       horizontal: 16,
@@ -202,7 +200,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                                     decoration: BoxDecoration(
                                       color:
                                           available
-                                              ? const Color(0xFFCBEccB)
+                                              ? const Color(0xFFCBECCB)
                                               : const Color(0xFFFFCDD2),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
@@ -213,8 +211,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                                         Text(
                                           time,
                                           style: const TextStyle(
-                                            fontSize:
-                                                16, // Fontu biraz küçülttüm
+                                            fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.black87,
                                           ),
@@ -254,13 +251,16 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
             );
           }
 
-          return AppLayout(body: bodyContent);
+          return AppLayout(
+            body: bodyContent,
+            // 🔥 USER BOTTOM BAR EKLENDİ
+            bottomBar: const UserBottomBar(currentIndex: 0),
+          );
         },
       ),
     );
   }
 
-  // --- YARDIMCI WIDGETLAR ---
   Widget _buildCustomDropdown({
     required String? value,
     required List<String> items,
@@ -294,12 +294,14 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
             fontWeight: FontWeight.w600,
           ),
           items:
-              items.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(item, overflow: TextOverflow.ellipsis),
-                );
-              }).toList(),
+              items
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(item, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
+                  .toList(),
           onChanged: onChanged,
         ),
       ),

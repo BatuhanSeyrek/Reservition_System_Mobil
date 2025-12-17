@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/admin_provider/chair_provider.dart';
 import '../../models/admin_model/chair_model.dart';
 import 'admin_layout.dart';
+import 'admin_sidebar.dart'; // AdminBottomBar
 
 class ChairDeleteUpdate extends StatefulWidget {
   @override
@@ -29,9 +30,12 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
     });
   }
 
-  String _formatTimeOfDay(TimeOfDay? time) {
+  // Türkiye saat formatı 24 saat
+  String _formatTimeOfDay24(TimeOfDay? time) {
     if (time == null) return '--:--';
-    return time.format(context);
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return "$h:$m";
   }
 
   Future<TimeOfDay?> pickTime(TimeOfDay? initialTime) async {
@@ -47,7 +51,6 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
               secondary: Colors.redAccent,
               onSurface: Colors.black87,
             ),
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
         );
@@ -219,7 +222,6 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
                 labelText: "Sandalye Adı",
                 prefixIcon: Icon(Icons.chair_alt, color: Colors.grey[900]),
                 border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey.shade400),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -274,7 +276,6 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
                     ),
                     onPressed: () {
                       if (!_formKey.currentState!.validate()) return;
-
                       if (openingTime == null ||
                           closingTime == null ||
                           islemSuresi == null) {
@@ -360,7 +361,7 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
         dense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         title: Text(
-          "$title: ${_formatTimeOfDay(time)}",
+          "$title: ${_formatTimeOfDay24(time)}",
           style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 14,
@@ -471,6 +472,7 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
           },
         ),
       ),
+      bottomBar: const AdminBottomBar(currentIndex: 1),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../models/admin_model/employee_model.dart';
 import '../../providers/admin_provider/employee_provider.dart';
 import '../../providers/admin_provider/chair_provider.dart';
 import '../../models/admin_model/chair_model.dart';
+import 'admin_sidebar.dart'; // AdminBottomBar
 
 class EmployeeDeleteUpdateScreen extends StatefulWidget {
   @override
@@ -368,6 +369,7 @@ class _EmployeeDeleteUpdateScreenState
           },
         ),
       ),
+      bottomBar: const AdminBottomBar(currentIndex: 2), // bottom bar eklendi
     );
   }
 }

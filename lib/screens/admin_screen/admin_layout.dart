@@ -1,90 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rezervasyon_mobil/screens/admin_screen/admin_profile_screen.dart';
-import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
+
 import '../../providers/auth_provider.dart';
-import '../footer.dart';
-import '../user_sidebar.dart';
-import '../user_profile_screen.dart' as user_profile; // User Profile import
+import '../admin_screen/admin_profile_screen.dart';
+import '../user_profile_screen.dart' as user_profile;
 
 class AppLayout extends StatefulWidget {
   final Widget body;
+  final Widget? bottomBar;
 
-  const AppLayout({required this.body, Key? key}) : super(key: key);
+  const AppLayout({Key? key, required this.body, this.bottomBar})
+    : super(key: key);
 
   @override
-  _AppLayoutState createState() => _AppLayoutState();
+  State<AppLayout> createState() => _AppLayoutState();
 }
 
 class _AppLayoutState extends State<AppLayout> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   String? displayName;
   String? storeName;
   bool isAdmin = false;
-  bool showSidebar = false;
+  bool isUser = false;
   bool isReference = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadRole();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateRole(); // provider değiştiğinde her zaman çalışacak
   }
 
-  Future<void> _loadRole() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    String? storedName = await secureStorage.read(key: "storeName");
+  Future<void> _updateRole() async {
+    final auth = context.watch<AuthProvider>();
+    final storedName = await secureStorage.read(key: "storeName");
 
-    if (!mounted) return;
+    // 🔹 Önce tüm state’i sıfırla
+    displayName = null;
+    storeName = null;
+    isAdmin = false;
+    isUser = false;
+    isReference = false;
 
-    setState(() {
-      if (auth.admin != null) {
-        // Admin login
-        isAdmin = true;
-        isReference = false;
-        displayName = auth.admin!.adminName;
-        showSidebar = true;
-        storeName = storedName;
-      } else if (auth.user == null &&
-          storedName != null &&
-          storedName.isNotEmpty) {
-        // Reference login
-        isAdmin = false;
-        isReference = true;
-        displayName = null;
-        showSidebar = false;
-        storeName = storedName;
-      } else if (auth.user != null) {
-        // Normal user login
-        isAdmin = false;
-        isReference = false;
-        displayName = auth.user!.name;
-        showSidebar = true;
-        storeName = null;
-      }
-    });
+    if (auth.admin != null) {
+      isAdmin = true;
+      displayName = auth.admin!.adminName;
+      storeName = auth.admin!.storeName ?? storedName;
+    } else if (auth.user != null) {
+      isUser = true;
+      displayName = auth.user!.name;
+    } else if (storedName != null && storedName.isNotEmpty) {
+      isReference = true;
+      storeName = storedName;
+    }
+
+    if (mounted) setState(() {});
   }
 
-  void handleLogout(BuildContext context) async {
+  Future<void> _logout() async {
     final auth = context.read<AuthProvider>();
     await auth.logout();
     await secureStorage.deleteAll();
     Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
   }
 
-  void handleAbout(BuildContext context) async {
+  Future<void> _goProfile() async {
     if (isAdmin) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
       );
-    } else if (!isReference && displayName != null) {
-      // Kullanıcı token’ı al
+    } else if (isUser) {
       final token = await secureStorage.read(key: "token") ?? "";
-
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => user_profile.UserProfileScreen(token: token),
@@ -93,33 +82,45 @@ class _AppLayoutState extends State<AppLayout> {
     }
   }
 
-  Widget buildLeftWidget() {
+  Widget _buildLeftWidget() {
     if (isAdmin || isReference) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             storeName ?? '',
             style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
           const SizedBox(width: 6),
-          const Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
-        ],
-      );
-    } else {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Text('MyApp', style: TextStyle(color: Colors.white, fontSize: 18)),
-          SizedBox(width: 6),
-          Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
+          const Icon(Icons.content_cut, color: Colors.redAccent),
         ],
       );
     }
+
+    return Row(
+      children: const [
+        Text('MyApp', style: TextStyle(color: Colors.white, fontSize: 18)),
+        SizedBox(width: 6),
+        Icon(Icons.content_cut, color: Colors.redAccent),
+      ],
+    );
   }
 
-  Widget? buildRightWidget(BuildContext context) {
-    if (isAdmin || (!isReference && displayName != null)) {
+  Widget _buildRightWidget() {
+    if (isReference) {
+      return TextButton(
+        onPressed: _logout,
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.redAccent,
+        ),
+        child: const Text(
+          'Çıkış',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    if (isAdmin || isUser) {
       return GestureDetector(
         onTap: () {
           showMenu(
@@ -131,7 +132,7 @@ class _AppLayoutState extends State<AppLayout> {
               0,
             ),
             items: const [
-              PopupMenuItem(value: 'about', child: Text('Profilim')),
+              PopupMenuItem(value: 'profile', child: Text('Profilim')),
               PopupMenuItem(
                 value: 'logout',
                 child: Text(
@@ -141,10 +142,8 @@ class _AppLayoutState extends State<AppLayout> {
               ),
             ],
           ).then((value) {
-            if (value == 'about')
-              handleAbout(context);
-            else if (value == 'logout')
-              handleLogout(context);
+            if (value == 'profile') _goProfile();
+            if (value == 'logout') _logout();
           });
         },
         child: Row(
@@ -159,42 +158,25 @@ class _AppLayoutState extends State<AppLayout> {
         ),
       );
     }
-    return null; // Reference: sağda hiçbir şey yok
+
+    return const SizedBox();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer:
-          showSidebar
-              ? Drawer(
-                child: Material(
-                  elevation: 16,
-                  child: isAdmin ? AdminSidebar() : UserSidebar(),
-                ),
-              )
-              : null,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[900],
-        leadingWidth: 40,
-        leading:
-            showSidebar
-                ? IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-                  onPressed: () => _scaffoldKey.currentState!.openDrawer(),
-                )
-                : null,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            buildLeftWidget(),
-            if (buildRightWidget(context) != null) buildRightWidget(context)!,
-          ],
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.grey[900],
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [_buildLeftWidget(), _buildRightWidget()],
+          ),
         ),
+        body: widget.body,
+        bottomNavigationBar: widget.bottomBar,
       ),
-      body: widget.body,
-      bottomNavigationBar: Footer(),
     );
   }
 }

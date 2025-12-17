@@ -1,137 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_dashboard_screen.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_employee.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_update_screen.dart';
-import '../../providers/auth_provider.dart';
-import '../about_screen.dart';
-import 'admin_chair.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_chair.dart';
+import 'package:rezervasyon_mobil/screens/about_screen.dart';
 
-class AdminSidebar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final admin = auth.admin!;
+class AdminBottomBar extends StatelessWidget {
+  final int currentIndex;
 
-    final menuItems = [
-      {'icon': Icons.info, 'title': 'About', 'page': AboutScreen()},
-      {
-        'icon': Icons.chair,
-        'title': 'Chair Management',
-        'page': ChairDeleteUpdate(),
-      },
-      {
-        'icon': Icons.person,
-        'title': 'Employee Management',
-        'page': EmployeeDeleteUpdateScreen(),
-      },
-      {
-        'icon': Icons.person,
-        'title': 'Admin Update',
-        'page': OwnerUpdateScreen(),
-      },
-      {
-        'icon': Icons.dashboard,
-        'title': 'Admin Reservation Dasboard',
-        'page': AdminDashboardScreen(),
-      },
-    ];
+  const AdminBottomBar({super.key, required this.currentIndex});
 
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        DrawerHeader(
-          decoration: BoxDecoration(color: Colors.grey[900]),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                admin.storeName,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                admin.adminName,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-        ...menuItems.map(
-          (item) => SidebarTile(
-            icon: item['icon'] as IconData,
-            title: item['title'] as String,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => item['page'] as Widget),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+  void _onTap(BuildContext context, int index) {
+    Widget page;
+
+    switch (index) {
+      case 0:
+        page = AdminDashboardScreen();
+        break;
+      case 1:
+        page = ChairDeleteUpdate();
+        break;
+      case 2:
+        page = EmployeeDeleteUpdateScreen();
+        break;
+      case 3:
+        page = OwnerUpdateScreen();
+        break;
+      case 4:
+        page = AboutScreen();
+        break;
+      default:
+        return;
+    }
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
-}
-
-class SidebarTile extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  SidebarTile({required this.icon, required this.title, required this.onTap});
-
-  @override
-  _SidebarTileState createState() => _SidebarTileState();
-}
-
-class _SidebarTileState extends State<SidebarTile> {
-  bool isHover = false;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: widget.onTap,
-      onHover: (hovering) => setState(() => isHover = hovering),
-      borderRadius: BorderRadius.circular(8),
-      splashColor: Colors.redAccent.withOpacity(0.2),
-      highlightColor: Colors.redAccent.withOpacity(0.1),
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color:
-              isHover ? Colors.redAccent.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow:
-              isHover
-                  ? [
-                    BoxShadow(
-                      color: Colors.redAccent.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ]
-                  : [],
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: const Color(0xFF1C1C1E), // koyu arka plan
+      currentIndex: currentIndex,
+      onTap: (index) => _onTap(context, index),
+      selectedItemColor: const Color(0xFFB1123C), // kırmızı ton
+      unselectedItemColor: Colors.white,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.dashboard),
+          label: 'Dashboard',
         ),
-        child: ListTile(
-          leading: Icon(
-            widget.icon,
-            color: isHover ? Colors.redAccent : Colors.black87,
-          ),
-          title: Text(
-            widget.title,
-            style: TextStyle(
-              color: isHover ? Colors.redAccent : Colors.black87,
-            ),
-          ),
-        ),
-      ),
+        BottomNavigationBarItem(icon: Icon(Icons.chair), label: 'Chairs'),
+        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Employees'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Admin'),
+        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+      ],
     );
   }
 }

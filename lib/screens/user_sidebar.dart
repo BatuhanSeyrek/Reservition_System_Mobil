@@ -1,68 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:rezervasyon_mobil/screens/about_screen.dart';
+import 'package:rezervasyon_mobil/screens/all_stores_screen.dart';
+import 'package:rezervasyon_mobil/screens/reservation_update_delete_screen.dart';
 import 'package:rezervasyon_mobil/screens/user_update_screen.dart';
 
-import 'all_stores_screen.dart';
+class UserBottomBar extends StatelessWidget {
+  final int? currentIndex; // nullable parametre ekledik
 
-class UserSidebar extends StatelessWidget {
-  const UserSidebar({super.key});
+  const UserBottomBar({Key? key, this.currentIndex}) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        const DrawerHeader(
-          decoration: BoxDecoration(color: Colors.black87),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.person, color: Colors.white, size: 48),
-              SizedBox(height: 8),
-              Text(
-                'User Menu',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ],
-          ),
-        ),
+  void _onTap(BuildContext context, int index) {
+    Widget page;
 
-        // 🔥 ALL STORES
-        ListTile(
-          leading: const Icon(Icons.store),
-          title: const Text('All Stores'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AllStoresScreen()),
-            );
-          },
-        ),
+    switch (index) {
+      case 0:
+        page = const AllStoresScreen();
+        break;
+      case 1:
+        page = const ReservationUpdateDeleteScreen();
+        break;
+      case 2:
+        page = const UserUpdateScreen();
+        break;
+      case 3:
+        page = const AboutScreen();
+        break;
+      default:
+        return;
+    }
 
-        ListTile(
-          leading: const Icon(Icons.person),
-          title: const Text('User Update'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => UserUpdateScreen()),
-            );
-          },
-        ),
-      ],
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
-}
-
-class UserProfileScreen extends StatelessWidget {
-  const UserProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
-      body: const Center(child: Text('User Profile Details Here')),
+    // currentIndex null ise -1 yapıyoruz, seçili renk gözükmez
+    final int indexToShow = currentIndex ?? -1;
+
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: const Color(0xFF1C1C1E),
+      currentIndex: indexToShow >= 0 ? indexToShow : 0,
+      onTap: (index) => _onTap(context, index),
+      selectedItemColor: const Color(0xFFB1123C),
+      unselectedItemColor: Colors.white,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'All Stores'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today),
+          label: 'Reservations',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+      ],
     );
   }
 }

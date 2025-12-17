@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider/reservation_provider.dart';
 import 'admin_layout.dart';
+import 'admin_sidebar.dart'; // AdminBottomBar
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -249,9 +250,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     SizedBox(height: 20),
 
-                    // ---------------------------
-                    //   📌 BAŞLANGIÇ – BİTİŞ TARİHİ
-                    // ---------------------------
                     Row(
                       children: [
                         Expanded(
@@ -263,9 +261,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (picked != null) {
+                              if (picked != null)
                                 setState(() => startDate = picked);
-                              }
                             },
                             child: Text(
                               startDate == null
@@ -284,9 +281,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (picked != null) {
+                              if (picked != null)
                                 setState(() => endDate = picked);
-                              }
                             },
                             child: Text(
                               endDate == null
@@ -364,6 +360,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         },
       ),
+      bottomBar: const AdminBottomBar(currentIndex: 0), // bottom bar eklendi
     );
   }
 
