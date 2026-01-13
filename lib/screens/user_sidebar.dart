@@ -14,7 +14,7 @@ class UserBottomBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        page = const AllStoresScreen();
+        page = AllStoresScreen();
         break;
       case 1:
         page = const ReservationUpdateDeleteScreen();

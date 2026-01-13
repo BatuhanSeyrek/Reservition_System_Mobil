@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rezervasyon_mobil/screens/user_chair_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/store_provider.dart';
+import '../models/user_model/store_models.dart';
+import 'user_chair_screen.dart';
 import 'admin_screen/admin_layout.dart';
-import '../screens/user_sidebar.dart'; // UserBottomBar
+import 'user_sidebar.dart';
 
 class AllStoresScreen extends StatefulWidget {
   const AllStoresScreen({super.key});
@@ -15,59 +17,57 @@ class AllStoresScreen extends StatefulWidget {
 
 class _AllStoresScreenState extends State<AllStoresScreen> {
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+  String? _cachedToken;
 
   @override
   void initState() {
     super.initState();
-    // Kullanıcı token'ı ile mağazaları çek
-    Future.microtask(() async {
-      final userToken = await secureStorage.read(key: "token");
-      if (userToken != null && userToken.isNotEmpty) {
-        context.read<StoreProvider>().fetchStores(token: userToken);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kullanıcı token bulunamadı!')),
-          );
-        }
-      }
-    });
+    _loadInitialData();
   }
 
-  // Responsive grid sütun sayısını belirleyen fonksiyon
-  int _calculateCrossAxisCount(double width) {
-    if (width >= 1200) return 4; // Büyük ekran
-    if (width >= 800) return 3; // Tablet
-    return 2; // Mobil
+  Future<void> _loadInitialData() async {
+    final token = await secureStorage.read(key: "token");
+    if (token != null && mounted) {
+      setState(() => _cachedToken = token);
+      context.read<StoreProvider>().fetchStores(token: token);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StoreProvider>();
-    final screenWidth = MediaQuery.of(context).size.width;
+    // ✅ Favoriye göre sıralanmış listeyi buradan alıyoruz
+    final sortedList = provider.sortedStores;
 
     return AppLayout(
       body:
           provider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : provider.error != null
-              ? Center(child: Text(provider.error!))
-              : provider.stores.isEmpty
-              ? const Center(child: Text('Hiç mağaza bulunamadı.'))
-              : Padding(
-                padding: const EdgeInsets.all(12.0),
+              ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFF0F172A)),
+              )
+              : RefreshIndicator(
+                onRefresh: _loadInitialData,
                 child: GridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: provider.stores.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _calculateCrossAxisCount(screenWidth),
+                  padding: const EdgeInsets.only(
+                    top: 16,
+                    left: 12,
+                    right: 12,
+                    bottom: 16,
+                  ),
+                  itemCount: sortedList.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    mainAxisExtent: 180, // Kart yüksekliği
+                    mainAxisExtent: 210,
                   ),
                   itemBuilder: (context, index) {
-                    final item = provider.stores[index];
-                    return _StoreCard(item: item);
+                    return _AnimatedStoreCard(
+                      // ✅ Sıralanmış listedeki elemanı gönderiyoruz
+                      storeData: sortedList[index],
+                      index: index,
+                      token: _cachedToken ?? "",
+                    );
                   },
                 ),
               ),
@@ -76,118 +76,252 @@ class _AllStoresScreenState extends State<AllStoresScreen> {
   }
 }
 
-class _StoreCard extends StatelessWidget {
-  final dynamic item;
+class _AnimatedStoreCard extends StatefulWidget {
+  final StoreResponse storeData;
+  final int index;
+  final String token;
 
-  const _StoreCard({required this.item});
+  const _AnimatedStoreCard({
+    required this.storeData,
+    required this.index,
+    required this.token,
+  });
+
+  @override
+  State<_AnimatedStoreCard> createState() => _AnimatedStoreCardState();
+}
+
+class _AnimatedStoreCardState extends State<_AnimatedStoreCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _favController;
+
+  @override
+  void initState() {
+    super.initState();
+    _favController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    _favController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    const Color accentColor = Color(0xFF9C1132); // Koyu kırmızı
-    const Color softAccentColor = Color(0xFF821034); // Soft kırmızı
-    const Color primaryTextColor = Color(0xFF14183E);
+    final provider = context.watch<StoreProvider>();
+    final isFav = provider.isFavorite(widget.storeData.store.id);
 
-    return Material(
-      elevation: 6,
-      borderRadius: BorderRadius.circular(20),
-      shadowColor: Colors.black26,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChairAvailabilityScreen(adminId: item.admin.id),
-            ),
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 300 + (widget.index * 100)),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
           ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.store.storeName,
-                style: const TextStyle(
-                  color: primaryTextColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Sahibi: ${item.admin.adminName}',
-                style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _InfoBadge(
-                    icon: Icons.event_seat,
-                    text: '${item.chairs.length}',
-                    bgColor: accentColor.withOpacity(0.1),
-                    iconColor: accentColor,
-                    textColor: accentColor,
+        );
+      },
+      child: Stack(
+        children: [
+          GestureDetector(
+            onTap:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => ChairAvailabilityScreen(
+                          adminId: widget.storeData.admin.id,
+                        ),
                   ),
-                  _InfoBadge(
-                    icon: Icons.people,
-                    text: '${item.employees.length}',
-                    bgColor: softAccentColor.withOpacity(0.1),
-                    iconColor: softAccentColor,
-                    textColor: softAccentColor,
+                ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 65,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1E293B),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        FontAwesomeIcons.store,
+                        color: Colors.white.withOpacity(0.1),
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.storeData.store.storeName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Yönetici: ${widget.storeData.admin.adminName}",
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _miniBadge(
+                              FontAwesomeIcons.chair,
+                              "${widget.storeData.chairs.length}",
+                              Colors.blue,
+                            ),
+                            _miniBadge(
+                              FontAwesomeIcons.userCheck,
+                              "${widget.storeData.employees.length}",
+                              Colors.green,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: _FavoriteButton(
+              isFav: isFav,
+              onTap: () {
+                if (widget.token.isNotEmpty) {
+                  if (!isFav) _favController.forward(from: 0);
+                  provider.toggleFavorite(
+                    token: widget.token,
+                    storeId: widget.storeData.store.id,
+                  );
+                }
+              },
+              controller: _favController,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniBadge(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _InfoBadge extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color bgColor;
-  final Color iconColor;
-  final Color textColor;
+class _FavoriteButton extends StatelessWidget {
+  final bool isFav;
+  final VoidCallback onTap;
+  final AnimationController controller;
 
-  const _InfoBadge({
-    required this.icon,
-    required this.text,
-    required this.bgColor,
-    required this.iconColor,
-    required this.textColor,
+  const _FavoriteButton({
+    required this.isFav,
+    required this.onTap,
+    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 16),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (isFav)
+          ScaleTransition(
+            scale: Tween<double>(begin: 0.8, end: 2.0).animate(
+              CurvedAnimation(parent: controller, curve: Curves.easeOut),
+            ),
+            child: FadeTransition(
+              opacity: Tween<double>(begin: 0.4, end: 0.0).animate(controller),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder:
+                  (child, anim) => ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                key: ValueKey(isFav),
+                color: isFav ? Colors.redAccent : Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
