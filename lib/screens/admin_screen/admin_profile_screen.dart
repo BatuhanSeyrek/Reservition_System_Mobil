@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../admin_screen/admin_sidebar.dart'; // AdminBottomBar'ın olduğu dosya yolu
 import 'admin_layout.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
+
+  // Saat ve Tarihi "SS:DD - GG.AA.YYYY" formatına çevirir
+  String formatDateTimeTR(String dateStr) {
+    try {
+      DateTime dt = DateTime.parse(dateStr);
+
+      String hour = dt.hour.toString().padLeft(2, '0');
+      String minute = dt.minute.toString().padLeft(2, '0');
+
+      String day = dt.day.toString().padLeft(2, '0');
+      String month = dt.month.toString().padLeft(2, '0');
+      String year = dt.year.toString();
+
+      return "$hour:$minute - $day.$month.$year";
+    } catch (e) {
+      return dateStr;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +63,21 @@ class AdminProfileScreen extends StatelessWidget {
                     // Bilgi Kartları
                     buildInfoCard("Mağaza", admin.storeName),
                     buildInfoCard("Telefon", admin.phoneNumber ?? "-"),
-                    buildInfoCard("Başlangıç Tarihi", admin.startTime),
-                    buildInfoCard("Bitiş Tarihi", admin.endTime),
+                    buildInfoCard(
+                      "Başlangıç Zamanı",
+                      formatDateTimeTR(admin.startTime),
+                    ),
+                    buildInfoCard(
+                      "Bitiş Zamanı",
+                      formatDateTimeTR(admin.endTime),
+                    ),
                     buildInfoCard("Koltuk Sayısı", admin.chairCount.toString()),
                   ],
                 ),
               ),
+
+      // 🔥 Bottom Bar buraya eklendi
+      bottomBar: const AdminBottomBar(currentIndex: 3),
     );
   }
 

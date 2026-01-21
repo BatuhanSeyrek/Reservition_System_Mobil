@@ -29,40 +29,56 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _updateRole(); // provider değiştiğinde her zaman çalışacak
+    _updateRole();
   }
 
   Future<void> _updateRole() async {
-    final auth = context.watch<AuthProvider>();
+    final auth = context.read<AuthProvider>();
     final storedName = await secureStorage.read(key: "storeName");
 
-    // 🔹 Önce tüm state’i sıfırla
-    displayName = null;
-    storeName = null;
-    isAdmin = false;
-    isUser = false;
-    isReference = false;
+    if (!mounted) return;
 
-    if (auth.admin != null) {
-      isAdmin = true;
-      displayName = auth.admin!.adminName;
-      storeName = auth.admin!.storeName ?? storedName;
-    } else if (auth.user != null) {
-      isUser = true;
-      displayName = auth.user!.name;
-    } else if (storedName != null && storedName.isNotEmpty) {
-      isReference = true;
-      storeName = storedName;
-    }
+    setState(() {
+      // 🔹 Rolleri kesin olarak birbirinden ayırıyoruz
+      isAdmin = auth.admin != null;
+      isUser = auth.user != null;
 
-    if (mounted) setState(() {});
+      if (isAdmin) {
+        displayName = auth.admin!.adminName;
+        storeName = auth.admin!.storeName ?? storedName;
+        isUser = false;
+        isReference = false;
+      } else if (isUser) {
+        displayName = auth.user!.name;
+        isAdmin = false;
+        isReference = false;
+      } else if (storedName != null && storedName.isNotEmpty) {
+        isReference = true;
+        storeName = storedName;
+        isAdmin = false;
+        isUser = false;
+      } else {
+        displayName = null;
+        storeName = null;
+        isAdmin = false;
+        isUser = false;
+        isReference = false;
+      }
+    });
   }
 
   Future<void> _logout() async {
     final auth = context.read<AuthProvider>();
     await auth.logout();
     await secureStorage.deleteAll();
-    Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+
+    // 🔥 EN KRİTİK NOKTA: pushAndRemoveUntil kullanarak tüm geçmişi siliyoruz.
+    // Bu, eski layout ve navbar kalıntılarını tamamen yok eder.
+    if (mounted) {
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+    }
   }
 
   Future<void> _goProfile() async {
@@ -82,6 +98,7 @@ class _AppLayoutState extends State<AppLayout> {
     }
   }
 
+  // --- Widget Oluşturucular (Aynı kalıyor) ---
   Widget _buildLeftWidget() {
     if (isAdmin || isReference) {
       return Row(
@@ -95,7 +112,6 @@ class _AppLayoutState extends State<AppLayout> {
         ],
       );
     }
-
     return Row(
       children: const [
         Text('MyApp', style: TextStyle(color: Colors.white, fontSize: 18)),
@@ -158,23 +174,27 @@ class _AppLayoutState extends State<AppLayout> {
         ),
       );
     }
-
     return const SizedBox();
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 AuthProvider'ı her değişimde dinlemesini sağlıyoruz
+    context.watch<AuthProvider>();
+
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.grey[900],
+          automaticallyImplyLeading: false,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [_buildLeftWidget(), _buildRightWidget()],
           ),
         ),
         body: widget.body,
+        // 🔹 Burası o sayfanın gönderdiği güncel Navbar'ı basacak
         bottomNavigationBar: widget.bottomBar,
       ),
     );

@@ -45,13 +45,13 @@ class UserBottomBar extends StatelessWidget {
       selectedItemColor: const Color(0xFFB1123C),
       unselectedItemColor: Colors.white,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'All Stores'),
+        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mağazalar'),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
-          label: 'Reservations',
+          label: 'Randevular',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Kullanıcı'),
+        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Hakkında'),
       ],
     );
   }

@@ -158,7 +158,7 @@ class _AnimatedStoreCardState extends State<_AnimatedStoreCard>
                   Container(
                     height: 65,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF1E293B),
+                      color: Color.fromARGB(255, 38, 38, 38),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(20),

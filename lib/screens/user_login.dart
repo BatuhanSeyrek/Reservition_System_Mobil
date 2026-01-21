@@ -87,7 +87,7 @@ class _UserLoginState extends State<UserLogin> {
                         Icon(Icons.content_cut, color: Colors.red, size: 30),
                         SizedBox(width: 8),
                         Text(
-                          'Berber Giriş',
+                          'Kullanıcı Girişi',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,

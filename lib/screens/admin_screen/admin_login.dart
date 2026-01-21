@@ -127,7 +127,7 @@ class _OwnerLoginScreenState extends State<AdminLogin> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Admin Girişi',
+                          'Yönetici Girişi',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class _OwnerLoginScreenState extends State<AdminLogin> {
                     TextField(
                       controller: _usernameController,
                       decoration: InputDecoration(
-                        labelText: 'Admin Kullanıcı Adı',
+                        labelText: 'Yönetici Adı',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

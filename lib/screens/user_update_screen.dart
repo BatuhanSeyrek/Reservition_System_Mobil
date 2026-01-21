@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:rezervasyon_mobil/providers/user_provideriki.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
-import 'package:rezervasyon_mobil/screens/user_sidebar.dart'; // ✅ EKLENDİ
+import 'package:rezervasyon_mobil/screens/user_sidebar.dart';
 
 class UserUpdateScreen extends StatefulWidget {
   const UserUpdateScreen({Key? key}) : super(key: key);
@@ -62,13 +62,13 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
 
     try {
       await context.read<UserProvider>().updateUser(token: token, data: data);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Bilgiler güncellendi')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bilgiler başarıyla güncellendi')),
+      );
     } catch (_) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Güncelleme hatası')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Güncelleme sırasında bir hata oluştu')),
+      );
     }
   }
 
@@ -93,7 +93,12 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Card(
-              color: const Color.fromARGB(255, 232, 232, 232),
+              color: const Color.fromARGB(
+                255,
+                245,
+                245,
+                245,
+              ), // Biraz daha açık bir gri
               elevation: 6,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -103,31 +108,38 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
                 child: Column(
                   children: [
                     const Text(
-                      'Update Your Info',
+                      'Bilgilerini Güncelle',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(
+                          255,
+                          255,
+                          82,
+                          82,
+                        ), // Kurumsal mavi
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    _input('Name', _userNameController),
+                    _input('Ad Soyad', _userNameController),
                     const SizedBox(height: 16),
-                    _input('Email', _emailController),
+                    _input('E-posta Adresi', _emailController),
                     const SizedBox(height: 16),
-                    _input('Phone', _phoneController),
+                    _input('Telefon Numarası', _phoneController),
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<String>(
                       value: _notificationType,
                       decoration: const InputDecoration(
-                        labelText: 'Notification Type',
+                        labelText: 'Bildirim Tercihi',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.notifications_active_outlined),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'MAIL', child: Text('Email')),
+                        DropdownMenuItem(value: 'MAIL', child: Text('E-posta')),
                         DropdownMenuItem(value: 'SMS', child: Text('SMS')),
-                        DropdownMenuItem(value: 'PUSH', child: Text('Push')),
+                        DropdownMenuItem(value: 'PUSH', child: Text('Hepsi')),
                       ],
                       onChanged: (v) => setState(() => _notificationType = v!),
                     ),
@@ -138,9 +150,10 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
                       controller: _passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Yeni şifre (isteğe bağlı)',
+                        labelText: 'Yeni Şifre',
+                        hintText: 'Değiştirmek istemiyorsanız boş bırakın',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock_outline),
                       ),
                     ),
 
@@ -148,10 +161,28 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
 
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 50,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            255,
+                            82,
+                            82,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                         onPressed: _submit,
-                        child: const Text('Update'),
+                        child: const Text(
+                          'Güncelle',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -161,8 +192,6 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
           ),
         ),
       ),
-
-      // 🔥 USER BOTTOM BAR BURADA
       bottomBar: const UserBottomBar(currentIndex: 2),
     );
   }
@@ -170,9 +199,10 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
   Widget _input(String label, TextEditingController c) {
     return TextField(
       controller: c,
-      decoration: const InputDecoration(
-        labelText: 'Label',
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        // Label kısmındaki "Label" yazısını düzelttim
       ),
     );
   }

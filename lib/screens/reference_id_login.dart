@@ -146,7 +146,10 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
                       children: [
                         Text(
                           "Kullanıcı olarak giriş yapmak ister misiniz?",
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                          ),
                         ),
                         SizedBox(height: 10),
                         SizedBox(

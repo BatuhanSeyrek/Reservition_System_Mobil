@@ -46,14 +46,11 @@ class AdminBottomBar extends StatelessWidget {
       selectedItemColor: const Color(0xFFB1123C), // kırmızı ton
       unselectedItemColor: Colors.white,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: 'Dashboard',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.chair), label: 'Chairs'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Employees'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Admin'),
-        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Panel'),
+        BottomNavigationBarItem(icon: Icon(Icons.chair), label: 'Koltuklar'),
+        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Personel'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Yönetici'),
+        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Hakkında'),
       ],
     );
   }
