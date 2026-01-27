@@ -49,6 +49,25 @@ class StoreProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> fetchStoresPublic() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Sadece mağazaları çekiyoruz, favoriler boş liste olarak kalıyor
+      final results = await StoreService.fetchStoresPublic();
+
+      _stores = results;
+      _favorites = []; // Giriş yapmayan kullanıcı için favori listesi boştur
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> toggleFavorite({
     required String token,
     required int storeId,

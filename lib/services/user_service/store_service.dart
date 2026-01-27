@@ -25,6 +25,26 @@ class StoreService {
     }
   }
 
+  static Future<List<StoreResponse>> fetchStoresPublic() async {
+    final response = await http.get(
+      Uri.parse('${Constants.baseUrl}/store/store'),
+      headers: {
+        'Content-Type': 'application/json',
+        // Authorization satırını sildik
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List data = json.decode(response.body);
+      return data.map((e) => StoreResponse.fromJson(e)).toList();
+    } else {
+      // 403 kontrolünü kaldırdık çünkü genel erişimde 403 almamayı bekleriz
+      throw Exception(
+        'Mağazalar yüklenemedi. Durum kodu: ${response.statusCode}',
+      );
+    }
+  }
+
   static Future<List<int>> fetchFavorites({required String token}) async {
     final response = await http.get(
       Uri.parse('${Constants.baseUrl}/api/favorites/my-favorites'),

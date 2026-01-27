@@ -9,9 +9,14 @@ import '../user_profile_screen.dart' as user_profile;
 class AppLayout extends StatefulWidget {
   final Widget body;
   final Widget? bottomBar;
+  final bool guestMode; // 🔒 GUEST KİLİDİ
 
-  const AppLayout({Key? key, required this.body, this.bottomBar})
-    : super(key: key);
+  const AppLayout({
+    Key? key,
+    required this.body,
+    this.bottomBar,
+    this.guestMode = false,
+  }) : super(key: key);
 
   @override
   State<AppLayout> createState() => _AppLayoutState();
@@ -39,7 +44,6 @@ class _AppLayoutState extends State<AppLayout> {
     if (!mounted) return;
 
     setState(() {
-      // 🔹 Rolleri kesin olarak birbirinden ayırıyoruz
       isAdmin = auth.admin != null;
       isUser = auth.user != null;
 
@@ -72,12 +76,8 @@ class _AppLayoutState extends State<AppLayout> {
     await auth.logout();
     await secureStorage.deleteAll();
 
-    // 🔥 EN KRİTİK NOKTA: pushAndRemoveUntil kullanarak tüm geçmişi siliyoruz.
-    // Bu, eski layout ve navbar kalıntılarını tamamen yok eder.
     if (mounted) {
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     }
   }
 
@@ -98,7 +98,6 @@ class _AppLayoutState extends State<AppLayout> {
     }
   }
 
-  // --- Widget Oluşturucular (Aynı kalıyor) ---
   Widget _buildLeftWidget() {
     if (isAdmin || isReference) {
       return Row(
@@ -112,9 +111,10 @@ class _AppLayoutState extends State<AppLayout> {
         ],
       );
     }
+
     return Row(
       children: const [
-        Text('MyApp', style: TextStyle(color: Colors.white, fontSize: 18)),
+        Text('KesTıraşı', style: TextStyle(color: Colors.white, fontSize: 18)),
         SizedBox(width: 6),
         Icon(Icons.content_cut, color: Colors.redAccent),
       ],
@@ -174,28 +174,46 @@ class _AppLayoutState extends State<AppLayout> {
         ),
       );
     }
+
     return const SizedBox();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 AuthProvider'ı her değişimde dinlemesini sağlıyoruz
     context.watch<AuthProvider>();
 
     return WillPopScope(
       onWillPop: () async => false,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.grey[900],
-          automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [_buildLeftWidget(), _buildRightWidget()],
+      child: Stack(
+        children: [
+          /// 🧱 NORMAL UYGULAMA
+          Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.grey[900],
+              automaticallyImplyLeading: false,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [_buildLeftWidget(), _buildRightWidget()],
+              ),
+            ),
+            body: widget.body,
+            bottomNavigationBar: widget.bottomBar,
           ),
-        ),
-        body: widget.body,
-        // 🔹 Burası o sayfanın gönderdiği güncel Navbar'ı basacak
-        bottomNavigationBar: widget.bottomBar,
+
+          /// 🔒 GUEST MODE → HER TIK LOGIN
+          if (widget.guestMode)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                },
+                child: Container(color: Colors.black.withOpacity(0.01)),
+              ),
+            ),
+        ],
       ),
     );
   }

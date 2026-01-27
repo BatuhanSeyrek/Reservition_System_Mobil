@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/screens/public_all_stores_screen.dart';
 import 'package:rezervasyon_mobil/screens/reference_id_login.dart';
 import '../providers/auth_provider.dart';
 
@@ -24,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Her durumda Reference Login sayfasını aç
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => ReferenceIdLoginScreen()),
+      MaterialPageRoute(builder: (_) => PublicAllStoresScreen()),
     );
   }
 

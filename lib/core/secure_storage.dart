@@ -14,4 +14,14 @@ class SecureStorage {
   Future<void> deleteToken() async {
     await _storage.delete(key: 'token');
   }
+
+  // Konumu kasaya yaz
+  Future<void> saveLocation(double lat, double lng) async {
+    await _storage.write(key: 'lat', value: lat.toString());
+    await _storage.write(key: 'lng', value: lng.toString());
+  }
+
+  // Konumu kasadan oku
+  Future<String?> readLat() async => await _storage.read(key: 'lat');
+  Future<String?> readLng() async => await _storage.read(key: 'lng');
 }
