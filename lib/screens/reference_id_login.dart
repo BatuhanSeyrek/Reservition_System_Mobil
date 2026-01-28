@@ -21,82 +21,129 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // 🔥 ARKA PLAN (UserLogin ile aynı)
+          // 🔥 ARKA PLAN (Sabit Karartma)
           Container(
             width: size.width,
             height: size.height,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/barbershop.jpg'),
+                image: const AssetImage('assets/images/barbershop.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.35),
+                  Colors.black.withOpacity(0.4),
                   BlendMode.darken,
                 ),
               ),
             ),
           ),
 
-          // 🔥 ORTADAKİ FORM (UserLogin ile birebir aynı tasarım)
-          Center(
+          // 🔥 ORTADAKİ FORM (Tam Hizalı ve Kırmızı Tema)
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            alignment: Alignment.center,
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
               child: Container(
-                width: size.width * 0.85,
-                padding: EdgeInsets.all(24),
+                width: size.width * 0.9,
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(35),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 10),
-
-                    // 🔥 Başlık - UserLogin ile aynı stil
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    // Başlık ve İkon (Kırmızı Renk Ayarlandı)
+                    Column(
                       children: [
-                        SizedBox(width: 8),
+                        Icon(
+                          Icons.qr_code_scanner,
+                          color: Colors.red.shade700,
+                          size: 40,
+                        ),
+                        const SizedBox(height: 10),
                         Text(
                           'Reference ID Girişi',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.blueGrey.shade900,
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 35),
 
-                    SizedBox(height: 30),
-
-                    // 🔥 Reference ID input
-                    TextField(
-                      controller: referenceCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Reference ID',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // 🔥 BELİRGİN TEXTBOX (Kırmızı Fokus ve Gri Dolgu)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: referenceCtrl,
+                        style: TextStyle(color: Colors.blueGrey.shade900),
+                        decoration: InputDecoration(
+                          labelText: 'Reference ID',
+                          labelStyle: TextStyle(
+                            color: Colors.blueGrey.shade500,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.vpn_key_outlined,
+                            color: Colors.red,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 18,
+                            horizontal: 20,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 2,
+                            ),
+                          ),
+                          border: InputBorder.none,
                         ),
                       ),
                     ),
+                    const SizedBox(height: 35),
 
-                    SizedBox(height: 30),
-
-                    // 🔥 Giriş Yap butonu (UserLogin ile aynı style)
+                    // 🔥 GİRİŞ BUTONU (Kırmızı)
                     SizedBox(
                       width: double.infinity,
+                      height: 58,
                       child:
                           provider.isLoading
-                              ? Center(child: CircularProgressIndicator())
+                              ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.red,
+                                ),
+                              )
                               : ElevatedButton(
                                 onPressed: () async {
                                   bool ok = await provider.loginWithReferenceId(
@@ -113,7 +160,7 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
                                     );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Text(
                                           'Reference ID hatalı veya bulunamadı.',
                                         ),
@@ -122,13 +169,13 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Colors.red.shade600,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(18),
                                   ),
+                                  elevation: 5,
                                 ),
-                                child: Text(
+                                child: const Text(
                                   'Giriş Yap',
                                   style: TextStyle(
                                     color: Colors.white,
@@ -138,43 +185,33 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
                                 ),
                               ),
                     ),
+                    const SizedBox(height: 25),
 
-                    SizedBox(height: 20),
-
-                    // 🔥 Kullanıcı Giriş yönlendirme (React sürümündeki gibi)
+                    // 🔥 KULLANICI GİRİŞİ YÖNLENDİRME (Kırmızı Vurgulu Link)
                     Column(
                       children: [
                         Text(
                           "Kullanıcı olarak giriş yapmak ister misiniz?",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.grey[700],
+                            color: Colors.blueGrey.shade600,
                             fontSize: 13,
                           ),
                         ),
-                        SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => UserLogin()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black87,
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              "Kullanıcı Girişi Yap",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => UserLogin()),
+                            );
+                          },
+                          child: Text(
+                            "Kullanıcı Girişi Yap",
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),

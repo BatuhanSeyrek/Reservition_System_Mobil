@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../../providers/auth_provider.dart';
-import '../admin_screen/admin_profile_screen.dart';
-import '../user_profile_screen.dart' as user_profile;
 
 class AppLayout extends StatefulWidget {
   final Widget body;
   final Widget? bottomBar;
-  final bool guestMode; // 🔒 GUEST KİLİDİ
+  final bool guestMode;
 
   const AppLayout({
     Key? key,
@@ -50,17 +47,11 @@ class _AppLayoutState extends State<AppLayout> {
       if (isAdmin) {
         displayName = auth.admin!.adminName;
         storeName = auth.admin!.storeName ?? storedName;
-        isUser = false;
-        isReference = false;
       } else if (isUser) {
         displayName = auth.user!.name;
-        isAdmin = false;
-        isReference = false;
       } else if (storedName != null && storedName.isNotEmpty) {
         isReference = true;
         storeName = storedName;
-        isAdmin = false;
-        isUser = false;
       } else {
         displayName = null;
         storeName = null;
@@ -81,96 +72,102 @@ class _AppLayoutState extends State<AppLayout> {
     }
   }
 
-  Future<void> _goProfile() async {
-    if (isAdmin) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
-      );
-    } else if (isUser) {
-      final token = await secureStorage.read(key: "token") ?? "";
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => user_profile.UserProfileScreen(token: token),
-        ),
-      );
-    }
-  }
-
   Widget _buildLeftWidget() {
-    if (isAdmin || isReference) {
-      return Row(
-        children: [
-          Text(
-            storeName ?? '',
-            style: const TextStyle(color: Colors.white, fontSize: 18),
-          ),
-          const SizedBox(width: 6),
-          const Icon(Icons.content_cut, color: Colors.redAccent),
-        ],
-      );
-    }
-
     return Row(
-      children: const [
-        Text('KesTıraşı', style: TextStyle(color: Colors.white, fontSize: 18)),
-        SizedBox(width: 6),
-        Icon(Icons.content_cut, color: Colors.redAccent),
+      children: [
+        Text(
+          (isAdmin || isReference) ? (storeName ?? '') : 'KesTıraşı',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
       ],
     );
   }
 
   Widget _buildRightWidget() {
+    // 1. Referans Girişi İçin Şık Çıkış Butonu
     if (isReference) {
-      return TextButton(
+      return OutlinedButton.icon(
         onPressed: _logout,
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.redAccent,
-        ),
-        child: const Text(
-          'Çıkış',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        icon: const Icon(Icons.logout, size: 16),
+        label: const Text('Çıkış'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.redAccent,
+          side: const BorderSide(color: Colors.redAccent, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
       );
     }
 
+    // 2. Admin veya Kullanıcı İçin Modern Popup Menü
     if (isAdmin || isUser) {
-      return GestureDetector(
+      return InkWell(
         onTap: () {
           showMenu(
             context: context,
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            color: Colors.grey[850],
             position: RelativeRect.fromLTRB(
-              MediaQuery.of(context).size.width - 150,
-              kToolbarHeight,
-              16,
+              MediaQuery.of(context).size.width - 20,
+              kToolbarHeight + 10,
+              20,
               0,
             ),
-            items: const [
-              PopupMenuItem(value: 'profile', child: Text('Profilim')),
+            items: [
               PopupMenuItem(
                 value: 'logout',
-                child: Text(
-                  'Çıkış Yap',
-                  style: TextStyle(color: Colors.redAccent),
+                child: Row(
+                  children: const [
+                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 12),
+                    Text(
+                      'Çıkış Yap',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ).then((value) {
-            if (value == 'profile') _goProfile();
             if (value == 'logout') _logout();
           });
         },
-        child: Row(
-          children: [
-            Text(
-              displayName ?? '',
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            const SizedBox(width: 6),
-            const Icon(Icons.person, color: Colors.redAccent),
-          ],
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: [
+              Text(
+                displayName ?? '',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.redAccent,
+                child: Icon(Icons.person, size: 18, color: Colors.white),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -186,10 +183,10 @@ class _AppLayoutState extends State<AppLayout> {
       onWillPop: () async => false,
       child: Stack(
         children: [
-          /// 🧱 NORMAL UYGULAMA
           Scaffold(
             appBar: AppBar(
               backgroundColor: Colors.grey[900],
+              elevation: 0,
               automaticallyImplyLeading: false,
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,8 +196,6 @@ class _AppLayoutState extends State<AppLayout> {
             body: widget.body,
             bottomNavigationBar: widget.bottomBar,
           ),
-
-          /// 🔒 GUEST MODE → HER TIK LOGIN
           if (widget.guestMode)
             Positioned.fill(
               child: GestureDetector(

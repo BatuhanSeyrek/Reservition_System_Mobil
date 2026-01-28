@@ -4,66 +4,86 @@ import 'package:rezervasyon_mobil/services/user_service/store_service.dart';
 
 class StoreProvider extends ChangeNotifier {
   List<StoreResponse> _stores = [];
-  List<int> _favorites = []; // Favori mağaza ID'leri
+  List<int> _favorites = [];
   bool _isLoading = false;
-  String? _error;
+  String _selectedCity = "";
+  String _selectedDistrict = "";
 
   List<StoreResponse> get stores => _stores;
-  List<int> get favorites => _favorites;
   bool get isLoading => _isLoading;
-  String? get error => _error;
+  String get selectedCity => _selectedCity;
+  String get selectedDistrict => _selectedDistrict;
 
-  // Favori mi kontrolü
   bool isFavorite(int storeId) => _favorites.contains(storeId);
+
+  // ✅ Filtreleme ve Sıralama (SQL Verisiyle Tam Uyumlu)
   List<StoreResponse> get sortedStores {
-    List<StoreResponse> sortedList = List.from(_stores);
-    sortedList.sort((a, b) {
+    List<StoreResponse> filteredList =
+        _stores.where((item) {
+          if (_selectedCity.isEmpty) return true;
+
+          // SQL'den gelen verileri al ve temizle
+          final String storeCity =
+              (item.admin.address?.city ?? "").trim().toLowerCase();
+          final String storeDist =
+              (item.admin.address?.district ?? "").trim().toLowerCase();
+
+          // Senin seçtiğin filtreleri küçük harfe çevir
+          final String filterCity = _selectedCity.trim().toLowerCase();
+          final String filterDist = _selectedDistrict.trim().toLowerCase();
+
+          // İlçe seçilmemişse sadece şehre bak, seçilmişse ikisine de bak
+          if (filterDist.isEmpty) {
+            return storeCity == filterCity;
+          } else {
+            return storeCity == filterCity && storeDist == filterDist;
+          }
+        }).toList();
+
+    // Favorileri başa taşı
+    filteredList.sort((a, b) {
       bool aFav = isFavorite(a.store.id);
       bool bFav = isFavorite(b.store.id);
-      if (aFav && !bFav) return -1; // Favori olan başa geçer
+      if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
       return 0;
     });
-    return sortedList;
+
+    return filteredList;
+  }
+
+  void updateLocationFilter(String city, String district) {
+    _selectedCity = city;
+    _selectedDistrict = district;
+    notifyListeners();
   }
 
   Future<void> fetchStores({required String token}) async {
     _isLoading = true;
-    _error = null;
     notifyListeners();
-
     try {
-      // React'taki Promise.all gibi paralel çalıştırıyoruz
       final results = await Future.wait([
         StoreService.fetchStores(token: token),
         StoreService.fetchFavorites(token: token),
       ]);
-
       _stores = results[0] as List<StoreResponse>;
       _favorites = results[1] as List<int>;
     } catch (e) {
-      _error = e.toString();
+      debugPrint("Hata: $e");
     }
-
     _isLoading = false;
     notifyListeners();
   }
 
   Future<void> fetchStoresPublic() async {
     _isLoading = true;
-    _error = null;
     notifyListeners();
-
     try {
-      // Sadece mağazaları çekiyoruz, favoriler boş liste olarak kalıyor
-      final results = await StoreService.fetchStoresPublic();
-
-      _stores = results;
-      _favorites = []; // Giriş yapmayan kullanıcı için favori listesi boştur
+      _stores = await StoreService.fetchStoresPublic();
+      _favorites = [];
     } catch (e) {
-      _error = e.toString();
+      debugPrint("Hata: $e");
     }
-
     _isLoading = false;
     notifyListeners();
   }
@@ -73,19 +93,14 @@ class StoreProvider extends ChangeNotifier {
     required int storeId,
   }) async {
     try {
-      // Optimistic Update: Önce arayüzde değiştiriyoruz (React'taki prev.includes mantığı)
-      if (_favorites.contains(storeId)) {
+      if (_favorites.contains(storeId))
         _favorites.remove(storeId);
-      } else {
+      else
         _favorites.add(storeId);
-      }
       notifyListeners();
-
-      // Sonra sunucuya gönderiyoruz
       await StoreService.toggleFavorite(token: token, storeId: storeId);
     } catch (e) {
-      // Hata olursa geri al (isteğe bağlı)
-      print("Favori güncellenirken hata: $e");
+      debugPrint("Favori hatası: $e");
     }
   }
 }

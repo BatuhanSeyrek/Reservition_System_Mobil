@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-
-// Kendi dosya yollarınıza göre düzenleyin
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
-import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import 'package:rezervasyon_mobil/screens/user_login.dart';
+import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart'; // Eğer AppLayout buradaysa
 import '../providers/store_provider.dart';
 import '../models/user_model/store_models.dart';
-import 'user_sidebar.dart';
 
 class PublicAllStoresScreen extends StatefulWidget {
   const PublicAllStoresScreen({super.key});
@@ -21,82 +17,1129 @@ class PublicAllStoresScreen extends StatefulWidget {
 
 class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
   final SecureStorage _myStorage = SecureStorage();
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  String? _cachedToken;
-  bool _isLoadingAuth = true;
+  // ✅ Türkiye'nin Tüm İlleri ve İlçeleri (Özetlenmiş tam liste mantığı)
+  final Map<String, List<String>> _turkiyeData = {
+    "Adana": [
+      "Aladağ",
+      "Ceyhan",
+      "Çukurova",
+      "Feke",
+      "İmamoğlu",
+      "Karaisalı",
+      "Karataş",
+      "Kozan",
+      "Pozantı",
+      "Saimbeyli",
+      "Sarıçam",
+      "Seyhan",
+      "Tufanbeyli",
+      "Yumurtalık",
+      "Yüreğir",
+    ],
+    "Adıyaman": [
+      "Besni",
+      "Çelikhan",
+      "Gerger",
+      "Gölbaşı",
+      "Kahta",
+      "Merkez",
+      "Samsat",
+      "Sincik",
+      "Tut",
+    ],
+    "Afyonkarahisar": [
+      "Başmakçı",
+      "Bayat",
+      "Bolvadin",
+      "Çay",
+      "Çobanlar",
+      "Dazkırı",
+      "Dinar",
+      "Emirdağ",
+      "Evciler",
+      "Hocalar",
+      "İhsaniye",
+      "İscehisar",
+      "Kızılören",
+      "Merkez",
+      "Sandıklı",
+      "Sinanpaşa",
+      "Sultandağı",
+      "Şuhut",
+    ],
+    "Ağrı": [
+      "Diyadin",
+      "Doğubayazıt",
+      "Eleşkirt",
+      "Hamur",
+      "Merkez",
+      "Patnos",
+      "Taşlıçay",
+      "Tutak",
+    ],
+    "Amasya": [
+      "Göynücek",
+      "Gümüşhacıköy",
+      "Hamamözü",
+      "Merkez",
+      "Merzifon",
+      "Suluova",
+      "Taşova",
+    ],
+    "Ankara": [
+      "Akyurt",
+      "Altındağ",
+      "Ayaş",
+      "Bala",
+      "Beypazarı",
+      "Çamlıdere",
+      "Çankaya",
+      "Çubuk",
+      "Elmadağ",
+      "Etimesgut",
+      "Evren",
+      "Gölbaşı",
+      "Güdül",
+      "Haymana",
+      "Kahramankazan",
+      "Kalecik",
+      "Keçiören",
+      "Kızılcahamam",
+      "Mamak",
+      "Nallıhan",
+      "Polatlı",
+      "Pursaklar",
+      "Sincan",
+      "Şereflikoçhisar",
+      "Yenimahalle",
+    ],
+    "Antalya": [
+      "Akseki",
+      "Aksu",
+      "Alanya",
+      "Demre",
+      "Döşemealtı",
+      "Elmalı",
+      "Finike",
+      "Gazipaşa",
+      "Gündoğmuş",
+      "İbradı",
+      "Kaş",
+      "Kemer",
+      "Kepez",
+      "Konyaaltı",
+      "Korkuteli",
+      "Kumluca",
+      "Manavgat",
+      "Muratpaşa",
+      "Serik",
+    ],
+    "Artvin": [
+      "Ardanuç",
+      "Arhavi",
+      "Borçka",
+      "Hopa",
+      "Kemalpaşa",
+      "Merkez",
+      "Murgul",
+      "Şavşat",
+      "Yusufeli",
+    ],
+    "Aydın": [
+      "Bozdoğan",
+      "Buharkent",
+      "Çine",
+      "Didim",
+      "Efeler",
+      "Germencik",
+      "İncirliova",
+      "Karacasu",
+      "Koçarlı",
+      "Köşk",
+      "Kuşadası",
+      "Kuyucak",
+      "Nazilli",
+      "Söke",
+      "Sultanhisar",
+      "Yenipazar",
+    ],
+    "Balıkesir": [
+      "Altıeylül",
+      "Ayvalık",
+      "Balya",
+      "Bandırma",
+      "Bigadiç",
+      "Burhaniye",
+      "Dursunbey",
+      "Edremit",
+      "Erdek",
+      "Gömeç",
+      "Gönen",
+      "Havran",
+      "İvrindi",
+      "Karesi",
+      "Kepsut",
+      "Manyas",
+      "Marmara",
+      "Savaştepe",
+      "Sındırgı",
+      "Susurluk",
+    ],
+    "Bilecik": [
+      "Bozüyük",
+      "Gölpazarı",
+      "İnhisar",
+      "Merkez",
+      "Osmaneli",
+      "Pazaryeri",
+      "Söğüt",
+      "Yenipazar",
+    ],
+    "Bingöl": [
+      "Adaklı",
+      "Genç",
+      "Karlıova",
+      "Kiğı",
+      "Merkez",
+      "Solhan",
+      "Yayladere",
+      "Yedisu",
+    ],
+    "Bitlis": [
+      "Adilcevaz",
+      "Ahlat",
+      "Güroymak",
+      "Hizan",
+      "Merkez",
+      "Mutki",
+      "Tatvan",
+    ],
+    "Bolu": [
+      "Dörtdivan",
+      "Gerede",
+      "Göynük",
+      "Kıbrıscık",
+      "Mengen",
+      "Merkez",
+      "Mudurnu",
+      "Seben",
+      "Yeniçağa",
+    ],
+    "Burdur": [
+      "Ağlasun",
+      "Altınyayla",
+      "Bucak",
+      "Çavdır",
+      "Çeltikçi",
+      "Gölhisar",
+      "Karamanlı",
+      "Kemer",
+      "Merkez",
+      "Tefenni",
+      "Yeşilova",
+    ],
+    "Bursa": [
+      "Büyükorhan",
+      "Gemlik",
+      "Gürsu",
+      "Harmancık",
+      "İnegöl",
+      "İznik",
+      "Karacabey",
+      "Keles",
+      "Kestel",
+      "Mudanya",
+      "Mustafakemalpaşa",
+      "Nilüfer",
+      "Orhaneli",
+      "Orhangazi",
+      "Osmangazi",
+      "Yenişehir",
+      "Yıldırım",
+    ],
+    "Çanakkale": [
+      "Ayvacık",
+      "Bayramiç",
+      "Biga",
+      "Bozcaada",
+      "Çan",
+      "Eceabat",
+      "Ezine",
+      "Gelibolu",
+      "Gökçeada",
+      "Lapseki",
+      "Merkez",
+      "Yenice",
+    ],
+    "Çankırı": [
+      "Atkaracalar",
+      "Bayramören",
+      "Çerkeş",
+      "Eldivan",
+      "Ilgaz",
+      "Kızılırmak",
+      "Korgun",
+      "Kurşunlu",
+      "Merkez",
+      "Orta",
+      "Şabanözü",
+      "Yapraklı",
+    ],
+    "Çorum": [
+      "Alaca",
+      "Bayat",
+      "Boğazkale",
+      "Dodurga",
+      "İskilip",
+      "Kargı",
+      "Laçin",
+      "Mecitözü",
+      "Merkez",
+      "Oğuzlar",
+      "Ortaköy",
+      "Osmancık",
+      "Sungurlu",
+      "Uğurludağ",
+    ],
+    "Denizli": [
+      "Acıpayam",
+      "Babadağ",
+      "Baklan",
+      "Bekilli",
+      "Beyağaç",
+      "Bozkurt",
+      "Buldan",
+      "Çal",
+      "Çameli",
+      "Çardak",
+      "Çivril",
+      "Güney",
+      "Honaz",
+      "Kale",
+      "Merkezefendi",
+      "Pamukkale",
+      "Sarayköy",
+      "Serinhisar",
+      "Tavas",
+    ],
+    "Diyarbakır": [
+      "Bağlar",
+      "Bismil",
+      "Çermik",
+      "Çınar",
+      "Çüngüş",
+      "Dicle",
+      "Eğil",
+      "Ergani",
+      "Hani",
+      "Hazro",
+      "Kayapınar",
+      "Kocaköy",
+      "Kulp",
+      "Lice",
+      "Silvan",
+      "Sur",
+      "Yenişehir",
+    ],
+    "Edirne": [
+      "Enez",
+      "Havsa",
+      "İpsala",
+      "Keşan",
+      "Lalapaşa",
+      "Meriç",
+      "Merkez",
+      "Süloğlu",
+      "Uzunköprü",
+    ],
+    "Elazığ": [
+      "Ağın",
+      "Alacakaya",
+      "Arıcak",
+      "Baskil",
+      "Karakoçan",
+      "Keban",
+      "Kovancılar",
+      "Maden",
+      "Merkez",
+      "Palu",
+      "Sivrice",
+    ],
+    "Erzincan": [
+      "Çayırlı",
+      "İliç",
+      "Kemah",
+      "Kemaliye",
+      "Merkez",
+      "Otlukbeli",
+      "Refahiye",
+      "Tercan",
+      "Üzümlü",
+    ],
+    "Erzurum": [
+      "Aşkale",
+      "Aziziye",
+      "Çat",
+      "Hınıs",
+      "Horasan",
+      "İspir",
+      "Karaçoban",
+      "Karayazı",
+      "Köprüköy",
+      "Narman",
+      "Oltu",
+      "Olur",
+      "Palandöken",
+      "Pasinline",
+      "Pazaryolu",
+      "Şenkaya",
+      "Tekman",
+      "Tortum",
+      "Uzundere",
+      "Yakutiye",
+    ],
+    "Eskişehir": [
+      "Alpu",
+      "Beylikova",
+      "Çifteler",
+      "Günyüzü",
+      "Han",
+      "İnönü",
+      "Mahmudiye",
+      "Mihalgazi",
+      "Mihalıççık",
+      "Odunpazarı",
+      "Sarıcakaya",
+      "Seyitgazi",
+      "Sivrihisar",
+      "Tepebaşı",
+    ],
+    "Gaziantep": [
+      "Araban",
+      "İslahiye",
+      "Karkamış",
+      "Nizip",
+      "Nurdağı",
+      "Oğuzeli",
+      "Şahinbey",
+      "Şehitkamil",
+      "Yavuzeli",
+    ],
+    "Giresun": [
+      "Alucra",
+      "Bulancak",
+      "Çamoluk",
+      "Çanakçı",
+      "Dereli",
+      "Doğankent",
+      "Espiye",
+      "Eynesil",
+      "Görele",
+      "Güce",
+      "Keşap",
+      "Merkez",
+      "Piraziz",
+      "Şebinkarahisar",
+      "Tirebolu",
+      "Yağlıdere",
+    ],
+    "Gümüşhane": ["Kelkit", "Köse", "Kürtün", "Merkez", "Şiran", "Torul"],
+    "Hakkari": ["Çukurca", "Derecik", "Merkez", "Şemdinli", "Yüksekova"],
+    "Hatay": [
+      "Altınözü",
+      "Antakya",
+      "Arsuz",
+      "Belen",
+      "Defne",
+      "Dörtyol",
+      "Erzin",
+      "Hassa",
+      "İskenderun",
+      "Kırıkhan",
+      "Kumlu",
+      "Payas",
+      "Reyhanlı",
+      "Samandağ",
+      "Yayladağı",
+    ],
+    "Isparta": [
+      "Aksu",
+      "Atabey",
+      "Eğirdir",
+      "Gelendost",
+      "Gönen",
+      "Keçiborlu",
+      "Merkez",
+      "Şarkikaraağaç",
+      "Senirkent",
+      "Sütçüler",
+      "Uluborlu",
+      "Yalvaç",
+      "Yenişarbademli",
+    ],
+    "Mersin": [
+      "Akdeniz",
+      "Anamur",
+      "Aydıncık",
+      "Bozyazı",
+      "Çamlıyayla",
+      "Erdemli",
+      "Gülnar",
+      "Mezitli",
+      "Mut",
+      "Silifke",
+      "Tarsus",
+      "Toroslar",
+      "Yenişehir",
+    ],
+    "İstanbul": [
+      "Adalar",
+      "Arnavutköy",
+      "Ataşehir",
+      "Avcılar",
+      "Bağcılar",
+      "Bahçelievler",
+      "Bakırköy",
+      "Başakşehir",
+      "Bayrampaşa",
+      "Beşiktaş",
+      "Beykoz",
+      "Beylikdüzü",
+      "Beyoğlu",
+      "Büyükçekmece",
+      "Çatalca",
+      "Çekmeköy",
+      "Esenler",
+      "Esenyurt",
+      "Eyüpsultan",
+      "Fatih",
+      "Gaziosmanpaşa",
+      "Güngören",
+      "Kadıköy",
+      "Kağıthane",
+      "Kartal",
+      "Küçükçekmece",
+      "Maltepe",
+      "Pendik",
+      "Sancaktepe",
+      "Sarıyer",
+      "Silivri",
+      "Sultanbeyli",
+      "Sultangazi",
+      "Şile",
+      "Şişli",
+      "Tuzla",
+      "Ümraniye",
+      "Üsküdar",
+      "Zeytinburnu",
+    ],
+    "İzmir": [
+      "Aliağa",
+      "Balçova",
+      "Bayındır",
+      "Bayraklı",
+      "Bergama",
+      "Beydağ",
+      "Bornova",
+      "Buca",
+      "Çeşme",
+      "Çiğli",
+      "Dikili",
+      "Foça",
+      "Gaziemir",
+      "Güzelbahçe",
+      "Karabağlar",
+      "Karaburun",
+      "Karşıyaka",
+      "Kemalpaşa",
+      "Kınık",
+      "Kiraz",
+      "Konak",
+      "Menderes",
+      "Menemen",
+      "Narlıdere",
+      "Ödemiş",
+      "Seferihisar",
+      "Selçuk",
+      "Tire",
+      "Torbalı",
+      "Urla",
+    ],
+    "Kars": [
+      "Akyaka",
+      "Arpaçay",
+      "Digor",
+      "Kağızman",
+      "Merkez",
+      "Sarıkamış",
+      "Selim",
+      "Susuz",
+    ],
+    "Kastamonu": [
+      "Abana",
+      "Ağlı",
+      "Araç",
+      "Azdavay",
+      "Bozkurt",
+      "Cide",
+      "Çatalzeytin",
+      "Daday",
+      "Devrekani",
+      "Doğanyurt",
+      "Hanönü",
+      "İhsangazi",
+      "İnebolu",
+      "Küre",
+      "Merkez",
+      "Pınarbaşı",
+      "Seydiler",
+      "Şenpazar",
+      "Taşköprü",
+      "Tosya",
+    ],
+    "Kayseri": [
+      "Akkışla",
+      "Bünyan",
+      "Develi",
+      "Felahiye",
+      "Hacılar",
+      "İncesu",
+      "Kocasinan",
+      "Melikgazi",
+      "Özvatan",
+      "Pınarbaşı",
+      "Sarıoğlan",
+      "Sarız",
+      "Talas",
+      "Tomarza",
+      "Yahyalı",
+      "Yeşilhisar",
+    ],
+    "Kırklareli": [
+      "Babaeski",
+      "Demirköy",
+      "Kofçaz",
+      "Lüleburgaz",
+      "Merkez",
+      "Pehlivanköy",
+      "Pınarhisar",
+      "Vize",
+    ],
+    "Kırşehir": [
+      "Akçakent",
+      "Akpınar",
+      "Boztepe",
+      "Çiçekdağı",
+      "Kaman",
+      "Merkez",
+      "Mucur",
+    ],
+    "Kocaeli": [
+      "Başiskele",
+      "Çayırova",
+      "Darıca",
+      "Derince",
+      "Dilovası",
+      "Gebze",
+      "Gölcük",
+      "İzmit",
+      "Kandıra",
+      "Karamürsel",
+      "Kartepe",
+      "Körfez",
+    ],
+    "Konya": [
+      "Ahırlı",
+      "Akören",
+      "Akşehir",
+      "Altınekin",
+      "Beyşehir",
+      "Bozkır",
+      "Cihanbeyli",
+      "Çeltik",
+      "Çumra",
+      "Derbent",
+      "Derebucak",
+      "Doğanhisar",
+      "Emirgazi",
+      "Ereğli",
+      "Güneysınır",
+      "Hadim",
+      "Halkapınar",
+      "Hüyük",
+      "Ilgın",
+      "Kadınhanı",
+      "Karapınar",
+      "Karatay",
+      "Kulu",
+      "Meram",
+      "Sarayönü",
+      "Selçuklu",
+      "Seydişehir",
+      "Taşkent",
+      "Tuzlukçu",
+      "Yalıhüyük",
+      "Yunak",
+    ],
+    "Kütahya": [
+      "Altıntaş",
+      "Aslanapa",
+      "Çavdarhisar",
+      "Domaniç",
+      "Dumlupınar",
+      "Emet",
+      "Gediz",
+      "Hisarcık",
+      "Merkez",
+      "Pazarlar",
+      "Şaphane",
+      "Simav",
+      "Tavşanlı",
+    ],
+    "Malatya": [
+      "Akçadağ",
+      "Arapgir",
+      "Arguvan",
+      "Battalgazi",
+      "Darende",
+      "Doğanşehir",
+      "Doğanyol",
+      "Hekimhan",
+      "Kale",
+      "Kuluncak",
+      "Pütürge",
+      "Yazıhan",
+      "Yeşilyurt",
+    ],
+    "Manisa": [
+      "Ahmetli",
+      "Akhisar",
+      "Alaşehir",
+      "Demirci",
+      "Gölmarmara",
+      "Gördes",
+      "Kırkağaç",
+      "Köprübaşı",
+      "Kula",
+      "Salihli",
+      "Sarıgöl",
+      "Saruhanlı",
+      "Selendi",
+      "Soma",
+      "Şehzadeler",
+      "Turgutlu",
+      "Yunusemre",
+    ],
+    "Kahramanmaraş": [
+      "Afşin",
+      "Andırın",
+      "Çağlayancerit",
+      "Dulkadiroğlu",
+      "Ekinözü",
+      "Elbistan",
+      "Göksun",
+      "Nurhak",
+      "Onikişubat",
+      "Pazarcık",
+      "Türkoğlu",
+    ],
+    "Mardin": [
+      "Artuklu",
+      "Dargeçit",
+      "Derik",
+      "Kızıltepe",
+      "Mazıdağı",
+      "Midyat",
+      "Nusaybin",
+      "Ömerli",
+      "Savur",
+      "Yeşilli",
+    ],
+    "Muğla": [
+      "Bodrum",
+      "Dalaman",
+      "Datça",
+      "Fethiye",
+      "Kavaklıdere",
+      "Köyceğiz",
+      "Marmaris",
+      "Menteşe",
+      "Milas",
+      "Ortaca",
+      "Seydikemer",
+      "Ula",
+      "Yatağan",
+    ],
+    "Muş": ["Bulanık", "Hasköy", "Korkut", "Malazgirt", "Merkez", "Varto"],
+    "Nevşehir": [
+      "Acıgöl",
+      "Avanos",
+      "Derinkuyu",
+      "Gülşehir",
+      "Hacıbektaş",
+      "Kozaklı",
+      "Merkez",
+      "Ürgüp",
+    ],
+    "Niğde": ["Altunhisar", "Bor", "Çamardı", "Çiftlik", "Merkez", "Ulukışla"],
+    "Ordu": [
+      "Akkuş",
+      "Altınordu",
+      "Aybastı",
+      "Çamaş",
+      "Çatalpınar",
+      "Çaybaşı",
+      "Fatsa",
+      "Gölköy",
+      "Gülyalı",
+      "Gürgentepe",
+      "İkizce",
+      "Kabadüz",
+      "Kabataş",
+      "Korgan",
+      "Kumru",
+      "Mesudiye",
+      "Perşembe",
+      "Ulubey",
+      "Ünye",
+    ],
+    "Rize": [
+      "Ardeşen",
+      "Çamlıhemşin",
+      "Çayeli",
+      "Derepazarı",
+      "Fındıklı",
+      "Güneysu",
+      "Hemşin",
+      "İkizdere",
+      "İyidere",
+      "Kalkandere",
+      "Merkez",
+      "Pazar",
+    ],
+    "Sakarya": [
+      "Adapazarı",
+      "Akyazı",
+      "Arifiye",
+      "Erenler",
+      "Ferizli",
+      "Geyve",
+      "Hendek",
+      "Karapürçek",
+      "Karasu",
+      "Kaynarca",
+      "Kocaali",
+      "Pamukova",
+      "Sapanca",
+      "Serdivan",
+      "Söğütlü",
+      "Taraklı",
+    ],
+    "Samsun": [
+      "19 Mayıs",
+      "Alaçam",
+      "Asarcık",
+      "Atakum",
+      "Ayvacık",
+      "Bafra",
+      "Canik",
+      "Çarşamba",
+      "Havza",
+      "İlkadım",
+      "Kavak",
+      "Ladik",
+      "Salıpazarı",
+      "Tekkeköy",
+      "Terme",
+      "Vezirköprü",
+      "Yakakent",
+    ],
+    "Siirt": [
+      "Baykan",
+      "Eruh",
+      "Kurtalan",
+      "Merkez",
+      "Pervari",
+      "Şirvan",
+      "Tillo",
+    ],
+    "Sinop": [
+      "Ayancık",
+      "Boyabat",
+      "Dikmen",
+      "Durağan",
+      "Erfelek",
+      "Gerze",
+      "Merkez",
+      "Saraydüzü",
+      "Türkeli",
+    ],
+    "Sivas": [
+      "Akıncılar",
+      "Altınyayla",
+      "Divriği",
+      "Doğanşar",
+      "Gemerek",
+      "Gölova",
+      "Gürün",
+      "Hafik",
+      "İmranlı",
+      "Kangal",
+      "Koyulhisar",
+      "Merkez",
+      "Şarkışla",
+      "Suşehri",
+      "Ulaş",
+      "Yıldızeli",
+      "Zara",
+    ],
+    "Tekirdağ": [
+      "Çerkezköy",
+      "Çorlu",
+      "Ergene",
+      "Hayrabolu",
+      "Kapaklı",
+      "Malkara",
+      "Marmaraereğlisi",
+      "Muratlı",
+      "Saray",
+      "Süleymanpaşa",
+      "Şarköy",
+    ],
+    "Tokat": [
+      "Almus",
+      "Artova",
+      "Başçiftlik",
+      "Erbaa",
+      "Merkez",
+      "Niksar",
+      "Pazar",
+      "Reşadiye",
+      "Sulusaray",
+      "Turhal",
+      "Yeşilyurt",
+      "Zile",
+    ],
+    "Trabzon": [
+      "Akçaabat",
+      "Araklı",
+      "Arsin",
+      "Beşikdüzü",
+      "Çarşıbaşı",
+      "Çaykara",
+      "Dernekpazarı",
+      "Düzköy",
+      "Hayrat",
+      "Köprübaşı",
+      "Maçka",
+      "Of",
+      "Ortahisar",
+      "Sürmene",
+      "Şalpazarı",
+      "Tonya",
+      "Vakfıkebir",
+      "Yomra",
+    ],
+    "Tunceli": [
+      "Çemişgezek",
+      "Hozat",
+      "Mazgirt",
+      "Merkez",
+      "Nazımiye",
+      "Ovacık",
+      "Pertek",
+      "Pülümür",
+    ],
+    "Şanlıurfa": [
+      "Akçakale",
+      "Birecik",
+      "Bozova",
+      "Ceylanpınar",
+      "Eyyübiye",
+      "Halfeti",
+      "Haliliye",
+      "Harran",
+      "Hilvan",
+      "Siverek",
+      "Suruç",
+      "Viranşehir",
+    ],
+    "Uşak": ["Banaz", "Eşme", "Karahallı", "Merkez", "Sivaslı", "Ulubey"],
+    "Van": [
+      "Bahçesaray",
+      "Başkale",
+      "Çaldıran",
+      "Çatak",
+      "Edremit",
+      "Erciş",
+      "Gevaş",
+      "Gürpınar",
+      "İpekyolu",
+      "Muradiye",
+      "Özalp",
+      "Saray",
+      "Tuşba",
+    ],
+    "Yozgat": [
+      "Akdağmadeni",
+      "Aydıncık",
+      "Boğazlıyan",
+      "Çandır",
+      "Çayıralan",
+      "Çekerek",
+      "Kadışehri",
+      "Merkez",
+      "Saraykent",
+      "Sarıkaya",
+      "Sorgun",
+      "Şefaatli",
+      "Yenifakılı",
+      "Yerköy",
+    ],
+    "Zonguldak": [
+      "Alaplı",
+      "Çaycuma",
+      "Devrek",
+      "Ereğli",
+      "Gökçebey",
+      "Kilimli",
+      "Kozlu",
+      "Merkez",
+    ],
+    "Aksaray": [
+      "Ağaçören",
+      "Eskil",
+      "Gülağaç",
+      "Güzelyurt",
+      "Merkez",
+      "Ortaköy",
+      "Sarıyahşi",
+      "Sultanhanı",
+    ],
+    "Bayburt": ["Aydıntepe", "Demirözü", "Merkez"],
+    "Karaman": [
+      "Ayrancı",
+      "Başyayla",
+      "Ermenek",
+      "Kazımkarabekir",
+      "Merkez",
+      "Sarıveliler",
+    ],
+    "Kırıkkale": [
+      "Bahşılı",
+      "Balışeyh",
+      "Çelebi",
+      "Delice",
+      "Karakeçili",
+      "Keskin",
+      "Merkez",
+      "Sulakyurt",
+      "Yahşihan",
+    ],
+    "Batman": ["Beşiri", "Gercüş", "Hasankeyf", "Merkez", "Kozluk", "Sason"],
+    "Şırnak": [
+      "Beytüşşebap",
+      "Cizre",
+      "Güçlükonak",
+      "İdil",
+      "Merkez",
+      "Silopi",
+      "Uludere",
+    ],
+    "Bartın": ["Amasra", "Kurucaşile", "Merkez", "Ulus"],
+    "Ardahan": ["Çıldır", "Damal", "Göle", "Hanak", "Merkez", "Posof"],
+    "Iğdır": ["Aralık", "Karakoyunlu", "Merkez", "Tuzluca"],
+    "Yalova": [
+      "Altınova",
+      "Armutlu",
+      "Çınarcık",
+      "Çiftlikköy",
+      "Merkez",
+      "Termal",
+    ],
+    "Karabük": [
+      "Eflani",
+      "Eskipazar",
+      "Merkez",
+      "Ovacık",
+      "Safranbolu",
+      "Yenice",
+    ],
+    "Kilis": ["Elbeyli", "Merkez", "Musabeyli", "Polateli"],
+    "Osmaniye": [
+      "Bahçe",
+      "Düziçi",
+      "Hasanbeyli",
+      "Kadirli",
+      "Merkez",
+      "Sumbas",
+      "Toprakkale",
+    ],
+    "Düzce": [
+      "Akçakoca",
+      "Cumayeri",
+      "Çilimli",
+      "Gölyaka",
+      "Gümüşova",
+      "Kaynaşlı",
+      "Merkez",
+      "Yığılca",
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    // ✅ HATA DÜZELTME: PostFrameCallback kullanımı
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeData();
+      }
+    });
   }
 
-  // Sayfa açıldığında hem yetkiyi kontrol eder hem konumu sorar
   Future<void> _initializeData() async {
-    await _checkAuth();
+    // Giriş yapmamış kullanıcılar için dükkanları çek
+    context.read<StoreProvider>().fetchStoresPublic();
     await _askForLocation();
   }
 
-  Future<void> _checkAuth() async {
-    final token = await secureStorage.read(key: "token");
-    if (mounted) {
-      setState(() {
-        _cachedToken = token;
-        _isLoadingAuth = false;
-      });
-      context.read<StoreProvider>().fetchStoresPublic();
-    }
-  }
-
-  // KONUM İZNİ VE KAYIT SÜRECİ
   Future<void> _askForLocation() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-
-      if (permission == LocationPermission.deniedForever) return;
-
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-
-      // Koordinatları SecureStorage'a kaydet
       await _myStorage.saveLocation(position.latitude, position.longitude);
-      print("Konum başarıyla kaydedildi: ${position.latitude}");
     } catch (e) {
-      print("Konum hatası: $e");
+      debugPrint("Konum hatası: $e");
     }
   }
 
-  void _showLoginPopup() {
+  void _showLoginAlert() {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            title: const Icon(
-              Icons.lock_person_rounded,
-              size: 50,
-              color: Color(0xFF0F172A),
+            title: const Row(
+              children: [
+                Icon(
+                  FontAwesomeIcons.circleExclamation,
+                  color: Color(0xFF0F172A),
+                ),
+                SizedBox(width: 10),
+                Text("Giriş Yapmalısın"),
+              ],
             ),
             content: const Text(
-              "Bu özelliği kullanmak için giriş yapmalısınız.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w500),
+              "Tüm özellikleri kullanabilmek için lütfen giriş yapın.",
             ),
-            actionsAlignment: MainAxisAlignment.center,
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(ctx),
                 child: const Text(
                   "Vazgeç",
                   style: TextStyle(color: Colors.grey),
@@ -104,13 +1147,13 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 42, 42, 43),
+                  backgroundColor: const Color(0xFF0F172A),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(ctx);
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => UserLogin()),
@@ -129,47 +1172,160 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StoreProvider>();
-    final bool isGuest = _cachedToken == null || _cachedToken!.isEmpty;
 
-    return Stack(
-      children: [
-        AppLayout(
-          bottomBar: const UserBottomBar(currentIndex: 0),
-          body:
-              _isLoadingAuth || provider.isLoading
-                  ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF0F172A)),
-                  )
-                  : RefreshIndicator(
-                    onRefresh: _initializeData,
-                    child: GridView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: provider.sortedStores.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisExtent: 210,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                      itemBuilder: (context, index) {
-                        return _StoreCard(
-                          storeData: provider.sortedStores[index],
-                        );
-                      },
-                    ),
-                  ),
-        ),
+    return AppLayout(
+      bottomBar: _buildFakeBottomBar(),
+      body: Column(
+        children: [
+          _buildLocationPicker(provider),
+          Expanded(
+            child:
+                provider.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildStoreGrid(provider),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // GUEST KALKANI: Misafirse her yer kilitli ve popup açar
-        if (isGuest && !_isLoadingAuth)
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _showLoginPopup,
-              child: Container(color: Colors.transparent),
+  Widget _buildLocationPicker(StoreProvider provider) {
+    // Alfabetik sıralama için illeri sıralayalım
+    List<String> sortedCities = _turkiyeData.keys.toList()..sort();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _styledDropdown(
+              hint: "İl Seç",
+              value:
+                  provider.selectedCity.isEmpty ? null : provider.selectedCity,
+              items: sortedCities,
+              onChanged: (val) {
+                if (val != null) provider.updateLocationFilter(val, "");
+              },
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _styledDropdown(
+              hint: "İlçe Seç",
+              value:
+                  provider.selectedDistrict.isEmpty
+                      ? null
+                      : provider.selectedDistrict,
+              items: _turkiyeData[provider.selectedCity] ?? [],
+              onChanged: (val) {
+                if (val != null)
+                  provider.updateLocationFilter(provider.selectedCity, val);
+              },
+            ),
+          ),
+          if (provider.selectedCity.isNotEmpty)
+            IconButton(
+              onPressed: () => provider.updateLocationFilter("", ""),
+              icon: const Icon(Icons.refresh, color: Colors.blue, size: 20),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _styledDropdown({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          hint: Text(hint, style: const TextStyle(fontSize: 12)),
+          isExpanded: true,
+          items:
+              items
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(
+                        e,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoreGrid(StoreProvider provider) {
+    final list = provider.sortedStores;
+
+    if (list.isEmpty) {
+      return const Center(child: Text("Bu bölgede dükkan bulunamadı."));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _initializeData,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: list.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisExtent: 225,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: _showLoginAlert,
+            child: _StoreCard(storeData: list[index]),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFakeBottomBar() {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: const Color(0xFF1C1C1E),
+      currentIndex: 0,
+      selectedItemColor: const Color(0xFFB1123C),
+      unselectedItemColor: Colors.white,
+      onTap: (_) => _showLoginAlert(),
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mağazalar'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today),
+          label: 'Randevular',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Kullanıcı'),
+        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Hakkında'),
       ],
     );
   }
@@ -225,6 +1381,8 @@ class _StoreCard extends StatelessWidget {
                 Text(
                   "Yönetici: ${storeData.admin.adminName}",
                   style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 14),
                 Row(
