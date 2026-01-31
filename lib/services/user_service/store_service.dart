@@ -27,7 +27,7 @@ class StoreService {
 
   static Future<List<StoreResponse>> fetchStoresPublic() async {
     final response = await http.get(
-      Uri.parse('${Constants.baseUrl}/store/store'),
+      Uri.parse('${Constants.baseUrl}/store/storee'),
       headers: {
         'Content-Type': 'application/json',
         // Authorization satırını sildik
