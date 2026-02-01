@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:rezervasyon_mobil/providers/store_provider.dart';
 import 'package:rezervasyon_mobil/models/user_model/store_models.dart';
 import 'package:rezervasyon_mobil/screens/user_chair_screen.dart';
@@ -16,6 +17,51 @@ class AllStoresScreen extends StatefulWidget {
 
 class _AllStoresScreenState extends State<AllStoresScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Uygulama açıldığında verileri ve konumu hazırla
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setupInitialData());
+  }
+
+  Future<void> _setupInitialData() async {
+    final provider = context.read<StoreProvider>();
+
+    // 1. Mağazaları API'den çek
+    await provider.initializeProvider();
+
+    // 2. Cihazın konumunu bul ve otomatik filtrele
+    await _handleLocationDiscovery();
+  }
+
+  Future<void> _handleLocationDiscovery() async {
+    try {
+      // Önce izin kontrolü
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        // Hızlı sonuç için Accuracy.low (Düşük hassasiyet - İl/İlçe için yeterli)
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+        );
+
+        if (mounted) {
+          // Provider'daki koordinatı adrese çeviren fonksiyonu çağır
+          await context.read<StoreProvider>().updateLocationFromCoordinates(
+            position.latitude,
+            position.longitude,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Otomatik konum hatası: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = context.watch<StoreProvider>();
     final stores = provider.sortedStores;
@@ -24,7 +70,7 @@ class _AllStoresScreenState extends State<AllStoresScreen> {
       bottomBar: const UserBottomBar(currentIndex: 0),
       body: Column(
         children: [
-          _FilterBar(provider),
+          _FilterBar(provider: provider),
           Expanded(
             child:
                 provider.isLoading
@@ -50,10 +96,10 @@ class _AllStoresScreenState extends State<AllStoresScreen> {
   }
 }
 
-/* ================= FILTER BAR ================= */
+/* ================= FİLTRELEME ÇUBUĞU ================= */
 class _FilterBar extends StatelessWidget {
   final StoreProvider provider;
-  const _FilterBar(this.provider);
+  const _FilterBar({required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +139,9 @@ class _FilterBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.restart_alt, color: Colors.blueGrey),
+            icon: const Icon(Icons.restart_alt, color: Colors.redAccent),
             onPressed: () => provider.clearFilters(),
+            tooltip: "Filtreleri Sıfırla",
           ),
         ],
       ),
@@ -118,23 +165,28 @@ class _Dropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       value: value,
+      isExpanded: true,
       hint: Text(hint, style: const TextStyle(fontSize: 13)),
       items:
-          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: const TextStyle(fontSize: 13)),
+                ),
+              )
+              .toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 10,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 }
 
-/* ================= STORE CARD ================= */
+/* ================= MAĞAZA KARTI ================= */
 class _StoreCard extends StatelessWidget {
   final StoreResponse store;
   const _StoreCard({required this.store});
@@ -193,12 +245,12 @@ class _StoreCard extends StatelessWidget {
                     children: [
                       Text(
                         store.store.storeName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         store.admin.adminName,
@@ -207,20 +259,19 @@ class _StoreCard extends StatelessWidget {
                           color: Colors.blueGrey,
                         ),
                       ),
-                      if (store.address != null) ...[
-                        const SizedBox(height: 6),
+                      const SizedBox(height: 6),
+                      if (store.address != null)
                         _LocationChip(
                           "${store.address!.city} / ${store.address!.district}",
                         ),
-                      ],
                       const SizedBox(height: 12),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _IconCount(
                             icon: FontAwesomeIcons.chair,
                             count: store.chairs.length,
                           ),
-                          const Spacer(),
                           _IconCount(
                             icon: FontAwesomeIcons.userTie,
                             count: store.employees.length,
@@ -258,7 +309,7 @@ class _StoreCard extends StatelessWidget {
   }
 }
 
-/* ================= HELPERS ================= */
+/* ================= YARDIMCI BİLEŞENLER ================= */
 class _IconCount extends StatelessWidget {
   final IconData icon;
   final int count;
@@ -329,7 +380,7 @@ class _EmptyState extends StatelessWidget {
           Icon(FontAwesomeIcons.mapLocationDot, size: 50, color: Colors.grey),
           SizedBox(height: 10),
           Text(
-            "Bu filtreye uygun işletme bulunamadı",
+            "Bu bölgede henüz bir işletme bulunmuyor",
             style: TextStyle(color: Colors.grey),
           ),
         ],

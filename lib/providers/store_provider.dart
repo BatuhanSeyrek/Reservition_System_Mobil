@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
 import 'package:rezervasyon_mobil/models/user_model/store_models.dart';
 import 'package:rezervasyon_mobil/services/user_service/store_service.dart';
@@ -179,5 +180,64 @@ class StoreProvider extends ChangeNotifier {
     _selectedCity = '';
     _selectedDistrict = '';
     notifyListeners();
+  }
+
+  Future<void> updateLocationFromCoordinates(double lat, double lng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+
+        // Ham veriyi temizle (Örn: "İstanbul İli" -> "İstanbul")
+        String rawCity =
+            (place.administrativeArea ?? "")
+                .replaceAll(" Province", "")
+                .replaceAll(" İli", "")
+                .replaceAll("il", "") // Küçük 'il' eklerini de temizle
+                .trim();
+
+        String rawDistrict = (place.subAdministrativeArea ?? "").trim();
+
+        debugPrint("Geocoding Ham Veri -> İl: $rawCity, İlçe: $rawDistrict");
+        debugPrint("Sistemdeki İller: $availableCities");
+
+        // 1. Şehir Eşleştirme (Büyük-Küçük harf duyarsız)
+        final cityMatch = availableCities.where(
+          (c) =>
+              c.toLowerCase().contains(rawCity.toLowerCase()) ||
+              rawCity.toLowerCase().contains(c.toLowerCase()),
+        );
+
+        if (cityMatch.isNotEmpty) {
+          _selectedCity =
+              cityMatch.first; // Sistemdeki orijinal ismi al (Örn: İstanbul)
+
+          // 2. İlçe Eşleştirme (Sadece seçilen ilin ilçelerine bak)
+          final districtList = availableDistricts;
+          final districtMatch = districtList.where(
+            (d) =>
+                d.toLowerCase().contains(rawDistrict.toLowerCase()) ||
+                rawDistrict.toLowerCase().contains(d.toLowerCase()),
+          );
+
+          if (districtMatch.isNotEmpty) {
+            _selectedDistrict = districtMatch.first;
+          } else {
+            _selectedDistrict = '';
+          }
+        } else {
+          _selectedCity = '';
+          _selectedDistrict = '';
+        }
+
+        debugPrint(
+          "Final Seçim -> İl: $_selectedCity, İlçe: $_selectedDistrict",
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Geocoding hatası: $e");
+    }
   }
 }
