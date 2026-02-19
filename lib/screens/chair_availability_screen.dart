@@ -22,6 +22,7 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
   @override
   void initState() {
     super.initState();
+    // ignore: use_build_context_synchronously
     Future.microtask(() => context.read<RefenceChairProvider>().loadChairs());
   }
 

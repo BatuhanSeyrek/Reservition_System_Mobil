@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
+import 'package:rezervasyon_mobil/screens/PublicChairAvailabilityScreen.dart'; // Import ismini kontrol et
 import 'package:rezervasyon_mobil/screens/user_login.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import '../providers/store_provider.dart';
@@ -59,7 +60,8 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     }
   }
 
-  void _showLoginAlert() {
+  // Alt bar için kısıtlama uyarısı
+  void _showRestrictedAccessAlert() {
     showDialog(
       context: context,
       builder:
@@ -140,15 +142,29 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               mainAxisExtent:
-                                  170, // Kartın toplam yüksekliği daraltıldı
+                                  170, // Kart yüksekliği orijinal değerinde
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
                             ),
-                        itemBuilder:
-                            (context, index) => GestureDetector(
-                              onTap: _showLoginAlert,
-                              child: _StoreCard(storeData: stores[index]),
-                            ),
+                        itemBuilder: (context, index) {
+                          final storeData = stores[index];
+                          return GestureDetector(
+                            onTap: () {
+                              // Mağaza detayına (koltuk ekranına) yönlendirme
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          PublicChairavailabilityscreen(
+                                            adminId: storeData.admin.id,
+                                          ),
+                                ),
+                              );
+                            },
+                            child: _StoreCard(storeData: storeData),
+                          );
+                        },
                       ),
                     ),
           ),
@@ -156,6 +172,8 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
       ),
     );
   }
+
+  // --- UI YARDIMCI WIDGETLAR (Görünüş Eskisi Gibi) ---
 
   Widget _buildLocationPicker(StoreProvider provider) {
     return Container(
@@ -255,6 +273,11 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
       currentIndex: 0,
       selectedItemColor: const Color(0xFFB1123C),
       unselectedItemColor: Colors.white,
+      onTap: (index) {
+        if (index != 0) {
+          _showRestrictedAccessAlert();
+        }
+      },
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.store, size: 20),
@@ -326,14 +349,13 @@ class _StoreCard extends StatelessWidget {
               ],
             ),
           ),
-          // Sadece beyaz alanı etkileyen sıkılaştırılmış Padding
           Padding(
             padding: const EdgeInsets.fromLTRB(
               8,
               4,
               8,
               4,
-            ), // Dikey boşluklar 4'e düşürüldü
+            ), // Sıkılaştırılmış padding korundu
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -352,7 +374,7 @@ class _StoreCard extends StatelessWidget {
                   storeData.admin.adminName,
                   style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
                 ),
-                const SizedBox(height: 4), // Bilgi arası boşluk azaltıldı
+                const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
@@ -386,9 +408,7 @@ class _StoreCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(
-                  height: 4,
-                ), // Alt ikonlar ile üst arası boşluk azaltıldı
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
