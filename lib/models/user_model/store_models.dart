@@ -4,11 +4,34 @@
 class Address {
   final String city;
   final String district;
+  // HATA BURADAYDI: Bu iki satır eksik olduğu için hata alıyordun
+  final double latitude;
+  final double longitude;
 
-  Address({required this.city, required this.district});
+  Address({
+    required this.city,
+    required this.district,
+    this.latitude = 0.0, // Varsayılan değer atıyoruz
+    this.longitude = 0.0,
+  });
 
   factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(city: json['city'] ?? '', district: json['district'] ?? '');
+    return Address(
+      city: json['city'] ?? '',
+      district: json['district'] ?? '',
+      // JSON'dan gelen veriyi güvenli bir şekilde double'a çeviriyoruz
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'city': city,
+      'district': district,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
   }
 }
 

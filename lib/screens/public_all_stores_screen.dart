@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
-import 'package:rezervasyon_mobil/screens/PublicChairAvailabilityScreen.dart'; // Import ismini kontrol et
+import 'package:rezervasyon_mobil/screens/PublicChairAvailabilityScreen.dart';
 import 'package:rezervasyon_mobil/screens/user_login.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import '../providers/store_provider.dart';
@@ -17,8 +17,6 @@ class PublicAllStoresScreen extends StatefulWidget {
 }
 
 class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
-  final SecureStorage _myStorage = SecureStorage();
-
   @override
   void initState() {
     super.initState();
@@ -56,62 +54,8 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
         }
       }
     } catch (e) {
-      debugPrint("Public Konum Hatası: $e");
+      debugPrint("Konum hatası: $e");
     }
-  }
-
-  // Alt bar için kısıtlama uyarısı
-  void _showRestrictedAccessAlert() {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Row(
-              children: [
-                Icon(
-                  FontAwesomeIcons.circleExclamation,
-                  color: Color(0xFF0F172A),
-                ),
-                SizedBox(width: 10),
-                Text("Giriş Yapmalısın"),
-              ],
-            ),
-            content: const Text(
-              "Tüm özellikleri kullanabilmek için lütfen giriş yapın.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  "Vazgeç",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => UserLogin()),
-                  );
-                },
-                child: const Text(
-                  "Giriş Yap",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-    );
   }
 
   @override
@@ -127,30 +71,29 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
           Expanded(
             child:
                 provider.isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFB1123C),
+                      ),
+                    )
                     : stores.isEmpty
                     ? const Center(child: Text("Bu bölgede dükkan bulunamadı."))
                     : RefreshIndicator(
                       onRefresh: _initializeData,
                       child: GridView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.all(12),
                         itemCount: stores.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              mainAxisExtent:
-                                  170, // Kart yüksekliği orijinal değerinde
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
+                              mainAxisExtent: 185,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
                             ),
                         itemBuilder: (context, index) {
                           final storeData = stores[index];
                           return GestureDetector(
                             onTap: () {
-                              // Mağaza detayına (koltuk ekranına) yönlendirme
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -173,8 +116,6 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     );
   }
 
-  // --- UI YARDIMCI WIDGETLAR (Görünüş Eskisi Gibi) ---
-
   Widget _buildLocationPicker(StoreProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -182,9 +123,7 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
       ),
       child: Row(
         children: [
@@ -194,9 +133,7 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
               value:
                   provider.selectedCity.isEmpty ? null : provider.selectedCity,
               items: provider.availableCities,
-              onChanged: (val) {
-                if (val != null) provider.updateLocationFilter(val, "");
-              },
+              onChanged: (val) => provider.updateLocationFilter(val!, ""),
             ),
           ),
           const SizedBox(width: 8),
@@ -208,22 +145,17 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
                       ? null
                       : provider.selectedDistrict,
               items: provider.availableDistricts,
-              onChanged: (val) {
-                if (val != null)
-                  provider.updateLocationFilter(provider.selectedCity, val);
-              },
+              onChanged:
+                  (val) => provider.updateLocationFilter(
+                    provider.selectedCity,
+                    val!,
+                  ),
             ),
           ),
           if (provider.selectedCity.isNotEmpty)
             IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
               onPressed: () => provider.clearFilters(),
-              icon: const Icon(
-                Icons.refresh,
-                color: Colors.redAccent,
-                size: 20,
-              ),
+              icon: const Icon(Icons.refresh, color: Colors.redAccent),
             ),
         ],
       ),
@@ -236,32 +168,21 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(
-            hint,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
-          ),
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 14),
-          items:
-              items
-                  .map(
-                    (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(e, style: const TextStyle(fontSize: 11)),
-                    ),
-                  )
-                  .toList(),
-          onChanged: onChanged,
-        ),
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: value,
+        hint: Text(hint, style: const TextStyle(fontSize: 12)),
+        isExpanded: true,
+        items:
+            items
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e, style: const TextStyle(fontSize: 12)),
+                  ),
+                )
+                .toList(),
+        onChanged: onChanged,
       ),
     );
   }
@@ -270,153 +191,204 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       backgroundColor: const Color(0xFF1C1C1E),
-      currentIndex: 0,
       selectedItemColor: const Color(0xFFB1123C),
       unselectedItemColor: Colors.white,
-      onTap: (index) {
-        if (index != 0) {
-          _showRestrictedAccessAlert();
-        }
-      },
       items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mağazalar'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.store, size: 20),
-          label: 'Mağazalar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today, size: 20),
+          icon: Icon(Icons.calendar_today),
           label: 'Randevular',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person, size: 20),
-          label: 'Kullanıcı',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.info, size: 20),
-          label: 'Hakkında',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Kullanıcı'),
       ],
+      onTap: (_) => _showRestrictedAccessAlert(),
+    );
+  }
+
+  void _showRestrictedAccessAlert() {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Giriş Yapmalısın"),
+            content: const Text("Bu özelliği kullanmak için giriş yapın."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Kapat"),
+              ),
+              ElevatedButton(
+                onPressed:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => UserLogin()),
+                    ),
+                child: const Text("Giriş Yap"),
+              ),
+            ],
+          ),
     );
   }
 }
 
+// ==========================================
+// STORE CARD WIDGET (REVİZE EDİLDİ)
+// ==========================================
 class _StoreCard extends StatelessWidget {
   final StoreResponse storeData;
   const _StoreCard({required this.storeData});
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<StoreProvider>();
+
+    // 🔍 KONSOL KONTROLÜ (Hatanın kaynağını görmek için)
+    debugPrint("--- KONUM LOGU ---");
+    debugPrint(
+      "Mağaza: ${storeData.store.storeName} -> Lat: ${storeData.address?.latitude}, Lng: ${storeData.address?.longitude}",
+    );
+    debugPrint(
+      "Kullanıcı Konumu -> Lat: ${provider.userLatitude}, Lng: ${provider.userLongitude}",
+    );
+    debugPrint("------------------");
+
+    String distanceText = "";
+
+    // Mesafe Hesaplama (0.0 Değilse Hesapla)
+    if (provider.userLatitude != null &&
+        provider.userLongitude != null &&
+        storeData.address?.latitude != null &&
+        storeData.address?.longitude != null &&
+        // ⚠️ Burası 0 ise hesaplama yapma (5425 km hatasını önler)
+        storeData.address!.latitude != 0.0) {
+      double distanceInMeters = Geolocator.distanceBetween(
+        provider.userLatitude!,
+        provider.userLongitude!,
+        storeData.address!.latitude,
+        storeData.address!.longitude,
+      );
+
+      if (distanceInMeters < 5) {
+        distanceText = "Buradasınız";
+      } else if (distanceInMeters < 1000) {
+        distanceText = "${distanceInMeters.toStringAsFixed(0)} m";
+      } else {
+        distanceText = "${(distanceInMeters / 1000).toStringAsFixed(1)} km";
+      }
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 50,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E293B),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: Stack(
-              children: [
-                const Center(
+          Stack(
+            children: [
+              Container(
+                height: 60,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1E293B),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: const Center(
                   child: Icon(
                     Icons.storefront,
-                    color: Colors.white10,
-                    size: 28,
+                    color: Colors.white24,
+                    size: 30,
                   ),
                 ),
+              ),
+              // Eğer mesafe hesaplanabildiyse badge'i göster
+              if (distanceText.isNotEmpty)
                 Positioned(
-                  top: 5,
-                  right: 5,
-                  child: Icon(
-                    Icons.favorite_border,
-                    color: Colors.white.withOpacity(0.5),
-                    size: 15,
+                  top: 6,
+                  left: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          distanceText == "Buradasınız"
+                              ? Icons.location_on
+                              : Icons.near_me,
+                          size: 10,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          distanceText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              8,
-              4,
-              8,
-              4,
-            ), // Sıkılaştırılmış padding korundu
+            padding: const EdgeInsets.all(8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   storeData.store.storeName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Color(0xFF1E293B),
+                    fontSize: 13,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   storeData.admin.adminName,
-                  style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFEAEA),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 9,
-                        color: Colors.redAccent,
-                      ),
-                      const SizedBox(width: 2),
-                      Flexible(
-                        child: Text(
-                          "${storeData.address?.city ?? ''} / ${storeData.address?.district ?? ''}",
-                          style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 10,
+                      color: Colors.redAccent,
+                    ),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        "${storeData.address?.city} / ${storeData.address?.district}",
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _badgeItem(Icons.chair_alt, "${storeData.chairs.length}"),
-                    _badgeItem(
-                      Icons.person_outline,
-                      "${storeData.employees.length}",
-                    ),
+                    _infoBadge(Icons.chair_alt, "${storeData.chairs.length}"),
+                    _infoBadge(Icons.person, "${storeData.employees.length}"),
                   ],
                 ),
               ],
@@ -427,19 +399,14 @@ class _StoreCard extends StatelessWidget {
     );
   }
 
-  Widget _badgeItem(IconData icon, String text) {
+  Widget _infoBadge(IconData icon, String label) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: const Color(0xFF64748B)),
+        Icon(icon, size: 12, color: Colors.blueGrey),
         const SizedBox(width: 2),
         Text(
-          text,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-            color: Color(0xFF334155),
-          ),
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart'; // Mesafe hesaplama için eklendi
 import 'package:rezervasyon_mobil/core/secure_storage.dart';
 import 'package:rezervasyon_mobil/models/user_model/store_models.dart';
 import 'package:rezervasyon_mobil/services/user_service/store_service.dart';
@@ -13,6 +14,10 @@ class StoreProvider extends ChangeNotifier {
   String _selectedDistrict = '';
   String? _token;
 
+  // --- Kullanıcı Konum Bilgileri ---
+  double? _userLatitude;
+  double? _userLongitude;
+
   // ================= GETTERS =================
   List<StoreResponse> get stores => _stores;
   bool get isLoading => _isLoading;
@@ -21,10 +26,13 @@ class StoreProvider extends ChangeNotifier {
   String get selectedCity => _selectedCity;
   String get selectedDistrict => _selectedDistrict;
 
+  // Koordinat Getterları (UI'da mesafe göstermek için)
+  double? get userLatitude => _userLatitude;
+  double? get userLongitude => _userLongitude;
+
   bool isFavorite(int storeId) => _favorites.contains(storeId);
 
-  // ================= TOKEN KURTARMA (YENİ) =================
-  // Hafızada token yoksa storage'a bakıp token'ı geri getirir
+  // ================= TOKEN KURTARMA =================
   Future<void> _ensureToken() async {
     if (_token == null || _token!.isEmpty) {
       final storage = SecureStorage();
@@ -44,7 +52,7 @@ class StoreProvider extends ChangeNotifier {
     }
   }
 
-  // ================= AUTH STORES =================
+  // ================= FETCH METODLARI =================
   Future<void> fetchStores({required String token}) async {
     _isLoading = true;
     _token = token;
@@ -68,7 +76,6 @@ class StoreProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================= PUBLIC STORES =================
   Future<void> fetchStoresPublic() async {
     _isLoading = true;
     _token = null;
@@ -85,21 +92,13 @@ class StoreProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================= FAVORITE (DÜZELTİLDİ) =================
+  // ================= FAVORİ İŞLEMLERİ =================
   Future<void> toggleFavorite(int storeId) async {
-    // 1. Token'ı garantile (Eğer login olduysan ama hafıza boşsa)
     await _ensureToken();
-
-    if (!hasToken) {
-      debugPrint(
-        "HATA: Giriş yapılmadığı için favorileme engellendi. Token hâlâ null.",
-      );
-      return;
-    }
+    if (!hasToken) return;
 
     final isFav = _favorites.contains(storeId);
 
-    // Optimistic UI
     if (isFav) {
       _favorites.remove(storeId);
     } else {
@@ -111,22 +110,21 @@ class StoreProvider extends ChangeNotifier {
       await StoreService.toggleFavorite(token: _token!, storeId: storeId);
     } catch (e) {
       debugPrint("Favori API hatası: $e");
-      // Hata olursa işlemi geri al
-      if (isFav) {
+      if (isFav)
         _favorites.add(storeId);
-      } else {
+      else
         _favorites.remove(storeId);
-      }
       notifyListeners();
     }
   }
 
-  // ================= FILTER & SORT =================
+  // ================= FİLTRELEME VE SIRALAMA (REVİZE EDİLDİ) =================
   List<StoreResponse> get sortedStores {
     final city = _selectedCity.toLowerCase();
     final district = _selectedDistrict.toLowerCase();
 
-    final filtered =
+    // 1. Önce İl/İlçe Filtrelemesi Yap
+    List<StoreResponse> filtered =
         _stores.where((s) {
           if (s.address == null) return false;
           final c = s.address!.city.toLowerCase();
@@ -137,17 +135,39 @@ class StoreProvider extends ChangeNotifier {
           return c == city && d == district;
         }).toList();
 
+    // 2. Akıllı Sıralama (Önce Favoriler, Sonra En Yakın Mesafe)
     filtered.sort((a, b) {
+      // Favori kontrolü
       final af = isFavorite(a.store.id);
       final bf = isFavorite(b.store.id);
+
       if (af && !bf) return -1;
       if (!af && bf) return 1;
+
+      // Eğer ikisi de favori veya ikisi de değilse mesafeye bak
+      if (_userLatitude != null && _userLongitude != null) {
+        double distA = Geolocator.distanceBetween(
+          _userLatitude!,
+          _userLongitude!,
+          a.address!.latitude,
+          a.address!.longitude,
+        );
+        double distB = Geolocator.distanceBetween(
+          _userLatitude!,
+          _userLongitude!,
+          b.address!.latitude,
+          b.address!.longitude,
+        );
+        return distA.compareTo(distB);
+      }
+
       return 0;
     });
 
     return filtered;
   }
 
+  // ================= LOKASYON FİLTRELERİ =================
   List<String> get availableCities {
     return _stores
         .map((e) => e.address?.city ?? "")
@@ -182,27 +202,27 @@ class StoreProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ================= KOORDİNAT GÜNCELLEME (REVİZE EDİLDİ) =================
   Future<void> updateLocationFromCoordinates(double lat, double lng) async {
+    // Koordinatları sakla (Mesafe hesaplama için kritik)
+    _userLatitude = lat;
+    _userLongitude = lng;
+
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
 
-        // Ham veriyi temizle (Örn: "İstanbul İli" -> "İstanbul")
         String rawCity =
             (place.administrativeArea ?? "")
                 .replaceAll(" Province", "")
                 .replaceAll(" İli", "")
-                .replaceAll("il", "") // Küçük 'il' eklerini de temizle
+                .replaceAll("il", "")
                 .trim();
-
         String rawDistrict = (place.subAdministrativeArea ?? "").trim();
 
-        debugPrint("Geocoding Ham Veri -> İl: $rawCity, İlçe: $rawDistrict");
-        debugPrint("Sistemdeki İller: $availableCities");
-
-        // 1. Şehir Eşleştirme (Büyük-Küçük harf duyarsız)
+        // Şehir Eşleştirme
         final cityMatch = availableCities.where(
           (c) =>
               c.toLowerCase().contains(rawCity.toLowerCase()) ||
@@ -210,10 +230,9 @@ class StoreProvider extends ChangeNotifier {
         );
 
         if (cityMatch.isNotEmpty) {
-          _selectedCity =
-              cityMatch.first; // Sistemdeki orijinal ismi al (Örn: İstanbul)
+          _selectedCity = cityMatch.first;
 
-          // 2. İlçe Eşleştirme (Sadece seçilen ilin ilçelerine bak)
+          // İlçe Eşleştirme
           final districtList = availableDistricts;
           final districtMatch = districtList.where(
             (d) =>
@@ -226,18 +245,13 @@ class StoreProvider extends ChangeNotifier {
           } else {
             _selectedDistrict = '';
           }
-        } else {
-          _selectedCity = '';
-          _selectedDistrict = '';
         }
-
-        debugPrint(
-          "Final Seçim -> İl: $_selectedCity, İlçe: $_selectedDistrict",
-        );
-        notifyListeners();
       }
     } catch (e) {
       debugPrint("Geocoding hatası: $e");
     }
+
+    // Hem konum saklandı hem filtre güncellendi, arayüzü yenile
+    notifyListeners();
   }
 }

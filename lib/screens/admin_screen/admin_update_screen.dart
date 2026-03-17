@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart'; // Konum paketi
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
 import '../../providers/admin_provider/admin_provider.dart';
 import '../../models/admin_model/admin_model.dart';
@@ -15,7 +16,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
   AdminModel? admin;
   bool isLoading = true;
   String password = '';
-  bool _showReferenceHint = false; // Reference ID uyarısı kontrolü
+  bool _showReferenceHint = false;
 
   @override
   void initState() {
@@ -35,7 +36,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
         admin = a;
         password = '';
         isLoading = false;
-        _showReferenceHint = !a.referenceStatus; // reference yoksa hint göster
+        _showReferenceHint = !a.referenceStatus;
       });
 
       if (!a.referenceStatus) {
@@ -59,40 +60,67 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
             title: Text('Hoşgeldiniz!'),
             content: Text(
               'Sistemimize ilk girişinizde Reference ID\'niz bulunmamaktadır. '
-              'Bu ID sayesinde müşterileriniz sizi bulacak. Lütfen bir kere mahsus Reference ID giriniz.',
+              'Bu ID sayesinde müşterileriniz sizi bulacak.\n\n'
+              'Önemli: Reference ID girip güncellediğinizde, mağazanızın konumu otomatik olarak mevcut konumunuz olarak kaydedilecektir.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Tamam'),
+                child: Text('Anladım'),
               ),
             ],
           ),
     );
   }
 
+  // Arka planda konumu alan yardımcı fonksiyon
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return null;
+    }
+
+    if (permission == LocationPermission.deniedForever) return null;
+
+    return await Geolocator.getCurrentPosition();
+  }
+
   void handleSubmit() async {
     if (_formKey.currentState!.validate() && admin != null) {
       final provider = Provider.of<AdminProvider>(context, listen: false);
 
+      setState(() => isLoading = true);
+
       try {
-        final updatedAdmin = AdminModel(
-          id: admin!.id,
-          adminName: admin!.adminName,
-          phoneNumber: admin!.phoneNumber,
-          storeName: admin!.storeName,
-          chairCount: admin!.chairCount,
-          status: admin!.status,
-          startTime: admin!.startTime,
-          endTime: admin!.endTime,
+        double lat = admin!.latitude;
+        double lng = admin!.longitude;
+
+        // EĞER ilk kez reference id giriliyorsa konumu otomatik al
+        if (!admin!.referenceStatus) {
+          Position? pos = await _getCurrentLocation();
+          if (pos != null) {
+            lat = pos.latitude;
+            lng = pos.longitude;
+          }
+        }
+
+        final updatedAdmin = admin!.copyWith(
           password: password.isNotEmpty ? password : '',
-          referenceId: admin!.referenceId,
+          latitude: lat,
+          longitude: lng,
         );
 
         await provider.updateAdmin(updatedAdmin);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Bilgiler başarıyla güncellendi.')),
+          SnackBar(content: Text('Bilgiler ve konum başarıyla güncellendi.')),
         );
 
         fetchAdminData();
@@ -100,6 +128,8 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Güncelleme sırasında hata oluştu.')),
         );
+      } finally {
+        setState(() => isLoading = false);
       }
     }
   }
@@ -131,15 +161,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child:
                     admin == null
-                        ? Center(
-                          child: Text(
-                            'Admin verisi bulunamadı.',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        )
+                        ? Center(child: Text('Admin verisi bulunamadı.'))
                         : Form(
                           key: _formKey,
                           child: Column(
@@ -155,7 +177,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                               ),
                               SizedBox(height: 24),
 
-                              // Admin Name
                               _buildTextField(
                                 label: 'Admin Name',
                                 initialValue: admin!.adminName,
@@ -165,7 +186,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
 
                               SizedBox(height: 16),
 
-                              // Password
                               _buildTextField(
                                 label: 'Password',
                                 initialValue: password,
@@ -184,7 +204,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
 
                               SizedBox(height: 16),
 
-                              // Store Name
                               _buildTextField(
                                 label: 'Store Name',
                                 initialValue: admin!.storeName,
@@ -194,7 +213,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
 
                               SizedBox(height: 16),
 
-                              // Phone Number
                               _buildTextField(
                                 label: 'Phone Number',
                                 initialValue: admin!.phoneNumber,
@@ -204,7 +222,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
 
                               SizedBox(height: 16),
 
-                              // Reference ID + hint
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -217,14 +234,11 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                             ? Color(0xFFE0E0E0)
                                             : Colors.grey[50],
                                     onChanged: (value) {
-                                      _updateAdmin(
-                                        referenceId: value,
-                                        referenceStatus: value.isNotEmpty,
-                                      );
+                                      _updateAdmin(referenceId: value);
                                       if (value.isNotEmpty) {
-                                        setState(() {
-                                          _showReferenceHint = false;
-                                        });
+                                        setState(
+                                          () => _showReferenceHint = false,
+                                        );
                                       }
                                     },
                                     validator: (value) {
@@ -239,7 +253,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
                                     Padding(
                                       padding: const EdgeInsets.only(top: 4.0),
                                       child: Text(
-                                        'Reference ID sadece bir kere girilebilir.',
+                                        'Reference ID ve Konum bir kere girilebilir.',
                                         style: TextStyle(
                                           color: Colors.redAccent,
                                           fontSize: 12,
@@ -251,7 +265,6 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
 
                               SizedBox(height: 24),
 
-                              // Update Button
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
@@ -284,6 +297,7 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
     );
   }
 
+  // Textfield Build metodu ve _updateAdmin metodun aynı kalıyor...
   Widget _buildTextField({
     required String label,
     String? initialValue,
@@ -307,7 +321,9 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
       readOnly: readOnly,
       onChanged: onChanged,
       validator:
-          validator ?? (value) => value!.isEmpty ? 'Boş bırakılamaz' : null,
+          validator ??
+          (value) =>
+              (value == null || value.isEmpty) ? 'Boş bırakılamaz' : null,
     );
   }
 
@@ -316,21 +332,14 @@ class _OwnerUpdateScreenState extends State<OwnerUpdateScreen> {
     String? phoneNumber,
     String? storeName,
     String? referenceId,
-    bool? referenceStatus,
   }) {
     if (admin == null) return;
     setState(() {
-      admin = AdminModel(
-        id: admin!.id,
+      admin = admin!.copyWith(
         adminName: adminName ?? admin!.adminName,
         phoneNumber: phoneNumber ?? admin!.phoneNumber,
         storeName: storeName ?? admin!.storeName,
-        chairCount: admin!.chairCount,
-        status: admin!.status,
-        startTime: admin!.startTime,
-        endTime: admin!.endTime,
         referenceId: referenceId ?? admin!.referenceId,
-        referenceStatus: referenceStatus ?? admin!.referenceStatus,
       );
     });
   }
