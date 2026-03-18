@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:rezervasyon_mobil/core/secure_storage.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/screens/PublicChairAvailabilityScreen.dart';
 import 'package:rezervasyon_mobil/screens/user_login.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
@@ -65,53 +65,63 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
 
     return AppLayout(
       bottomBar: _buildFakeBottomBar(),
-      body: Column(
-        children: [
-          _buildLocationPicker(provider),
-          Expanded(
-            child:
-                provider.isLoading
-                    ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFB1123C),
+      body: Container(
+        color: AppColors.background, // Piramit açık gri zemin
+        child: Column(
+          children: [
+            _buildLocationPicker(provider),
+            Expanded(
+              child:
+                  provider.isLoading
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryGreen,
+                        ),
+                      )
+                      : stores.isEmpty
+                      ? const Center(
+                        child: Text(
+                          "Bu bölgede dükkan bulunamadı.",
+                          style: TextStyle(color: AppColors.darkGrey),
+                        ),
+                      )
+                      : RefreshIndicator(
+                        color: AppColors.primaryGreen,
+                        onRefresh: _initializeData,
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: stores.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisExtent:
+                                    195, // Kart boyutu hafif artırıldı
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                              ),
+                          itemBuilder: (context, index) {
+                            final storeData = stores[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            PublicChairavailabilityscreen(
+                                              adminId: storeData.admin.id,
+                                            ),
+                                  ),
+                                );
+                              },
+                              child: _StoreCard(storeData: storeData),
+                            );
+                          },
+                        ),
                       ),
-                    )
-                    : stores.isEmpty
-                    ? const Center(child: Text("Bu bölgede dükkan bulunamadı."))
-                    : RefreshIndicator(
-                      onRefresh: _initializeData,
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: stores.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 185,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                        itemBuilder: (context, index) {
-                          final storeData = stores[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          PublicChairavailabilityscreen(
-                                            adminId: storeData.admin.id,
-                                          ),
-                                ),
-                              );
-                            },
-                            child: _StoreCard(storeData: storeData),
-                          );
-                        },
-                      ),
-                    ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -123,7 +133,10 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        border: Border.all(color: AppColors.lightGrey),
+        boxShadow: [
+          BoxShadow(color: AppColors.darkGrey.withOpacity(0.05), blurRadius: 8),
+        ],
       ),
       child: Row(
         children: [
@@ -155,7 +168,7 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
           if (provider.selectedCity.isNotEmpty)
             IconButton(
               onPressed: () => provider.clearFilters(),
-              icon: const Icon(Icons.refresh, color: Colors.redAccent),
+              icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
             ),
         ],
       ),
@@ -171,14 +184,28 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: value,
-        hint: Text(hint, style: const TextStyle(fontSize: 12)),
+        hint: Text(
+          hint,
+          style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
+        ),
         isExpanded: true,
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          size: 18,
+          color: AppColors.primaryGreen,
+        ),
         items:
             items
                 .map(
                   (e) => DropdownMenuItem(
                     value: e,
-                    child: Text(e, style: const TextStyle(fontSize: 12)),
+                    child: Text(
+                      e,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
                   ),
                 )
                 .toList(),
@@ -190,16 +217,22 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
   Widget _buildFakeBottomBar() {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFF1C1C1E),
-      selectedItemColor: const Color(0xFFB1123C),
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.darkGrey,
+      selectedItemColor: AppColors.primaryGreen,
+      unselectedItemColor: Colors.white54,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mağazalar'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
+          icon: Icon(Icons.store_rounded),
+          label: 'Mağazalar',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today_rounded),
           label: 'Randevular',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Kullanıcı'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_rounded),
+          label: 'Kullanıcı',
+        ),
       ],
       onTap: (_) => _showRestrictedAccessAlert(),
     );
@@ -210,20 +243,67 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text("Giriş Yapmalısın"),
-            content: const Text("Bu özelliği kullanmak için giriş yapın."),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_person_rounded,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Giriş Yapın",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ],
+            ),
+            content: const Text(
+              "Daha fazla işlem yapabilmek için lütfen hesabınıza giriş yapın.",
+              style: TextStyle(color: Colors.grey),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text("Kapat"),
+                child: const Text(
+                  "Vazgeç",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               ElevatedButton(
-                onPressed:
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => UserLogin()),
-                    ),
-                child: const Text("Giriş Yap"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => UserLogin()),
+                  );
+                },
+                child: const Text(
+                  "Giriş Yap",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -231,9 +311,6 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
   }
 }
 
-// ==========================================
-// STORE CARD WIDGET (REVİZE EDİLDİ)
-// ==========================================
 class _StoreCard extends StatelessWidget {
   final StoreResponse storeData;
   const _StoreCard({required this.storeData});
@@ -241,25 +318,13 @@ class _StoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StoreProvider>();
-
-    // 🔍 KONSOL KONTROLÜ (Hatanın kaynağını görmek için)
-    debugPrint("--- KONUM LOGU ---");
-    debugPrint(
-      "Mağaza: ${storeData.store.storeName} -> Lat: ${storeData.address?.latitude}, Lng: ${storeData.address?.longitude}",
-    );
-    debugPrint(
-      "Kullanıcı Konumu -> Lat: ${provider.userLatitude}, Lng: ${provider.userLongitude}",
-    );
-    debugPrint("------------------");
-
     String distanceText = "";
 
-    // Mesafe Hesaplama (0.0 Değilse Hesapla)
+    // Mesafe hesaplama mantığı...
     if (provider.userLatitude != null &&
         provider.userLongitude != null &&
         storeData.address?.latitude != null &&
         storeData.address?.longitude != null &&
-        // ⚠️ Burası 0 ise hesaplama yapma (5425 km hatasını önler)
         storeData.address!.latitude != 0.0) {
       double distanceInMeters = Geolocator.distanceBetween(
         provider.userLatitude!,
@@ -267,7 +332,6 @@ class _StoreCard extends StatelessWidget {
         storeData.address!.latitude,
         storeData.address!.longitude,
       );
-
       if (distanceInMeters < 5) {
         distanceText = "Buradasınız";
       } else if (distanceInMeters < 1000) {
@@ -280,9 +344,14 @@ class _StoreCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightGrey.withOpacity(0.5)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -291,59 +360,46 @@ class _StoreCard extends StatelessWidget {
           Stack(
             children: [
               Container(
-                height: 60,
+                height: 70,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF1E293B),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: const Center(
                   child: Icon(
-                    Icons.storefront,
-                    color: Colors.white24,
-                    size: 30,
+                    Icons.storefront_rounded,
+                    color: Colors.white30,
+                    size: 35,
                   ),
                 ),
               ),
-              // Eğer mesafe hesaplanabildiyse badge'i göster
               if (distanceText.isNotEmpty)
                 Positioned(
-                  top: 6,
-                  left: 6,
+                  top: 8,
+                  left: 8,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(6),
+                      color: AppColors.darkGrey.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          distanceText == "Buradasınız"
-                              ? Icons.location_on
-                              : Icons.near_me,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          distanceText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      distanceText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -351,30 +407,27 @@ class _StoreCard extends StatelessWidget {
                   storeData.store.storeName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: 14,
+                    color: AppColors.darkGrey,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  storeData.admin.adminName,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(
-                      Icons.location_on,
-                      size: 10,
-                      color: Colors.redAccent,
+                      Icons.location_on_rounded,
+                      size: 12,
+                      color: AppColors.primaryGreen,
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        "${storeData.address?.city} / ${storeData.address?.district}",
+                        "${storeData.address?.district}",
                         style: const TextStyle(
-                          fontSize: 9,
-                          color: Colors.redAccent,
+                          fontSize: 10,
+                          color: AppColors.primaryGreen,
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
@@ -383,12 +436,15 @@ class _StoreCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _infoBadge(Icons.chair_alt, "${storeData.chairs.length}"),
-                    _infoBadge(Icons.person, "${storeData.employees.length}"),
+                    _infoBadge(
+                      Icons.person_search_rounded,
+                      "${storeData.employees.length}",
+                    ),
                   ],
                 ),
               ],
@@ -402,11 +458,15 @@ class _StoreCard extends StatelessWidget {
   Widget _infoBadge(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 12, color: Colors.blueGrey),
-        const SizedBox(width: 2),
+        Icon(icon, size: 14, color: AppColors.primaryGreen.withOpacity(0.7)),
+        const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: AppColors.darkGrey,
+          ),
         ),
       ],
     );

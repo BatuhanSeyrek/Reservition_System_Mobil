@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart'; // Renk paleti
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import '../../models/admin_model/employee_model.dart';
 import '../../providers/admin_provider/employee_provider.dart';
 import '../../providers/admin_provider/chair_provider.dart';
 import '../../models/admin_model/chair_model.dart';
-import 'admin_sidebar.dart'; // AdminBottomBar
+import 'admin_sidebar.dart';
 
 class EmployeeDeleteUpdateScreen extends StatefulWidget {
+  const EmployeeDeleteUpdateScreen({super.key});
+
   @override
   State<EmployeeDeleteUpdateScreen> createState() =>
       _EmployeeDeleteUpdateScreenState();
@@ -55,9 +58,12 @@ class _EmployeeDeleteUpdateScreenState
   Future<void> _handleSubmit() async {
     final employeeName = _employeeNameController.text.trim();
     if (employeeName.isEmpty || selectedChairId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Lütfen tüm alanları doldurun.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Lütfen tüm alanları doldurun."),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -72,20 +78,26 @@ class _EmployeeDeleteUpdateScreenState
     try {
       if (editMode) {
         await provider.updateEmployee(editEmployeeId!, employee);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Çalışan güncellendi.")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Çalışan güncellendi."),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
       } else {
         await provider.addEmployee(employee);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Çalışan eklendi.")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Çalışan başarıyla eklendi."),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
       }
       _resetForm();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Hata: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Hata: $e"), backgroundColor: Colors.redAccent),
+      );
     }
   }
 
@@ -94,23 +106,36 @@ class _EmployeeDeleteUpdateScreenState
       context: ctx,
       builder:
           (context) => AlertDialog(
-            title: Text("Silme Onayı"),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Silme Onayı",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             content: Text(
-              "Bu çalışanı kalıcı olarak silmek istediğinize emin misiniz?",
+              "${emp.employeeName} isimli çalışanı silmek istediğinize emin misiniz?",
             ),
             actions: [
               TextButton(
-                child: Text("İptal", style: TextStyle(color: Colors.grey)),
+                child: const Text(
+                  "İptal",
+                  style: TextStyle(color: Colors.grey),
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
-              TextButton(
-                child: Text("Sil", style: TextStyle(color: Colors.redAccent)),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  elevation: 0,
+                ),
+                child: const Text("Sil", style: TextStyle(color: Colors.white)),
                 onPressed: () async {
                   await context.read<EmployeeProvider>().deleteEmployee(emp.id);
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("Çalışan silindi.")));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Çalışan silindi.")),
+                  );
                 },
               ),
             ],
@@ -123,199 +148,190 @@ class _EmployeeDeleteUpdateScreenState
     final employees = context.watch<EmployeeProvider>().employees;
     final chairs = context.watch<ChairProvider>().chairs;
 
-    Widget formCard = Card(
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                editMode ? "Çalışanı Düzenle" : "Yeni Çalışan Ekle",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.grey[900],
-                ),
-              ),
-              Divider(
-                height: 24,
-                thickness: 1.5,
-                color: Colors.grey[900]!.withOpacity(0.3),
-              ),
-              TextFormField(
-                controller: _employeeNameController,
-                decoration: InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 12,
-                  ),
-                  labelText: "Çalışan Adı",
-                  prefixIcon: Icon(Icons.person, color: Colors.grey[900]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                validator:
-                    (v) =>
-                        (v == null || v.isEmpty)
-                            ? "Lütfen bir isim giriniz."
-                            : null,
-              ),
-              SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: selectedChairId,
-                decoration: InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 12,
-                  ),
-                  labelText: "Koltuk Seç",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                items:
-                    chairs
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c.id.toString(),
-                            child: Text(c.chairName),
-                          ),
-                        )
-                        .toList(),
-                onChanged: (val) => setState(() => selectedChairId = val),
-                validator:
-                    (v) =>
-                        (v == null || v.isEmpty)
-                            ? "Lütfen bir koltuk seçin."
-                            : null,
-              ),
-              SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      icon: Icon(
-                        editMode ? Icons.update : Icons.add_circle,
-                        size: 20,
-                      ),
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0),
-                        child: Text(
-                          editMode ? "Güncelle" : "Ekle",
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (!_formKey.currentState!.validate()) return;
-                        _handleSubmit();
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.grey[900],
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  if (editMode) SizedBox(width: 8),
-                  if (editMode)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: Icon(
-                          Icons.cancel_outlined,
-                          color: Colors.grey[900],
-                          size: 20,
-                        ),
-                        label: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text(
-                            "İptal",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[900],
-                            ),
-                          ),
-                        ),
-                        onPressed: _resetForm,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: Colors.grey[900]!.withOpacity(0.5),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
+    // --- MODERN FORM KARTI ---
+    Widget formCard = Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  editMode ? Icons.edit_note_rounded : Icons.person_add_rounded,
+                  color: AppColors.primaryGreen,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  editMode ? "Çalışanı Düzenle" : "Yeni Çalışan Ekle",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.darkGrey,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            _buildTextField(
+              "Çalışan Adı Soyadı",
+              _employeeNameController,
+              Icons.badge_outlined,
+            ),
+            const SizedBox(height: 16),
+            _buildDropdown(chairs),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _handleSubmit,
+                    child: Text(
+                      editMode ? "GÜNCELLE" : "KAYDET",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                if (editMode) const SizedBox(width: 10),
+                if (editMode)
+                  IconButton(
+                    onPressed: _resetForm,
+                    icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.grey.shade100,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
 
     return AppLayout(
-      body: Padding(
-        padding: EdgeInsets.all(33),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            bool isSmallScreen = constraints.maxWidth < 900;
+      body: Container(
+        color: AppColors.background,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Üst Başlık
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  Icon(Icons.people_alt_rounded, color: AppColors.darkGrey),
+                  SizedBox(width: 10),
+                  Text(
+                    "Personel Yönetimi",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.darkGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-            Widget employeeList =
-                employees.isEmpty
-                    ? Center(
-                      child: Text(
-                        "Çalışan bulunamadı.",
-                        style: TextStyle(color: Colors.grey[700]),
-                      ),
-                    )
-                    : Scrollbar(
-                      child: ListView.builder(
+            Expanded(
+              child:
+                  employees.isEmpty
+                      ? const Center(
+                        child: Text(
+                          "Henüz personel eklenmemiş.",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                      : ListView.builder(
                         itemCount: employees.length,
                         itemBuilder: (_, i) {
                           final emp = employees[i];
-                          final chairName =
-                              chairs
-                                  .firstWhere(
-                                    (c) => c.id == emp.chairId,
-                                    orElse:
-                                        () => Chair(
-                                          id: 0,
-                                          chairName: "Bilinmiyor",
-                                          openingTime: "",
-                                          closingTime: "",
-                                          islemSuresi: "",
-                                        ),
-                                  )
-                                  .chairName;
+                          final chair = chairs.firstWhere(
+                            (c) => c.id == emp.chairId,
+                            orElse:
+                                () => Chair(
+                                  id: 0,
+                                  chairName: "Atanmamış",
+                                  openingTime: "",
+                                  closingTime: "",
+                                  islemSuresi: "",
+                                ),
+                          );
 
-                          return Card(
-                            margin: EdgeInsets.only(bottom: 12),
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 8,
+                              ),
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primaryGreen
+                                    .withOpacity(0.1),
+                                child: const Icon(
+                                  Icons.person_rounded,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
                               title: Text(
                                 emp.employeeName,
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.darkGrey,
+                                ),
                               ),
-                              subtitle: Text("Koltuk: $chairName"),
+                              subtitle: Text(
+                                "Hizmet Noktası: ${chair.chairName}",
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    icon: Icon(
-                                      Icons.edit_note,
-                                      color: Colors.redAccent,
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: Colors.blueAccent,
+                                      size: 22,
                                     ),
                                     onPressed: () => _handleEdit(emp),
                                   ),
                                   IconButton(
-                                    icon: Icon(
-                                      Icons.delete_forever,
-                                      color: Colors.red.shade700,
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 22,
                                     ),
                                     onPressed:
                                         () => _showDeleteConfirmation(
@@ -329,47 +345,90 @@ class _EmployeeDeleteUpdateScreenState
                           );
                         },
                       ),
-                    );
-
-            if (isSmallScreen) {
-              return Column(
-                children: [
-                  Expanded(child: employeeList),
-                  if (showForm) SizedBox(height: 12),
-                  if (showForm) formCard,
-                  SizedBox(height: 12),
-                  if (!showForm)
-                    ElevatedButton(
-                      child: Text("Yeni Çalışan Ekle"),
-                      onPressed: () => setState(() => showForm = true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[900],
-                        foregroundColor: Colors.white,
+            ),
+            if (showForm) const SizedBox(height: 20),
+            if (showForm) formCard,
+            if (!showForm)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text("YENİ PERSONEL EKLE"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkGrey,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                ],
-              );
-            } else {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: showForm ? 60 : 100, child: employeeList),
-                  if (showForm) SizedBox(width: 33),
-                  if (showForm)
-                    Expanded(
-                      flex: 40,
-                      child: SizedBox(
-                        height: constraints.maxHeight - 66,
-                        child: formCard,
-                      ),
-                    ),
-                ],
-              );
-            }
-          },
+                    onPressed: () => setState(() => showForm = true),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
-      bottomBar: const AdminBottomBar(currentIndex: 2), // bottom bar eklendi
+      bottomBar: const AdminBottomBar(currentIndex: 2),
+    );
+  }
+
+  // --- YARDIMCI GİRİŞ BİLEŞENLERİ ---
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(fontWeight: FontWeight.w600),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: AppColors.primaryGreen, size: 20),
+        filled: true,
+        fillColor: AppColors.background.withOpacity(0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(List<Chair> chairs) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: selectedChairId,
+        decoration: const InputDecoration(
+          labelText: "Hizmet Koltuğu",
+          prefixIcon: Icon(
+            Icons.chair_alt_rounded,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
+          border: InputBorder.none,
+        ),
+        items:
+            chairs
+                .map(
+                  (c) => DropdownMenuItem(
+                    value: c.id.toString(),
+                    child: Text(
+                      c.chairName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                )
+                .toList(),
+        onChanged: (val) => setState(() => selectedChairId = val),
+      ),
     );
   }
 }

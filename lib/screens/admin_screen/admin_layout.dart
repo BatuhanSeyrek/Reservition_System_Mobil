@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart'; // Renk paletini dahil ettik
 import '../../providers/auth_provider.dart';
 
 class AppLayout extends StatefulWidget {
@@ -78,28 +79,34 @@ class _AppLayoutState extends State<AppLayout> {
         Text(
           (isAdmin || isReference) ? (storeName ?? '') : 'KesTıraşı',
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.white, // Başlık her zaman beyaz kalsın
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(Icons.content_cut, color: Colors.redAccent, size: 20),
+        const Icon(
+          Icons.content_cut,
+          color: AppColors.primaryGreen, // İkon: Su Yeşili
+          size: 20,
+        ),
       ],
     );
   }
 
   Widget _buildRightWidget() {
-    // 1. Referans Girişi İçin Şık Çıkış Butonu
     if (isReference) {
       return OutlinedButton.icon(
         onPressed: _logout,
         icon: const Icon(Icons.logout, size: 16),
         label: const Text('Çıkış'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.redAccent,
-          side: const BorderSide(color: Colors.redAccent, width: 1.5),
+          foregroundColor: AppColors.primaryGreen, // Buton yazısı yeşil
+          side: const BorderSide(
+            color: AppColors.primaryGreen,
+            width: 1.5,
+          ), // Kenarlık yeşil
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -108,7 +115,6 @@ class _AppLayoutState extends State<AppLayout> {
       );
     }
 
-    // 2. Admin veya Kullanıcı İçin Modern Popup Menü
     if (isAdmin || isUser) {
       return InkWell(
         onTap: () {
@@ -118,7 +124,7 @@ class _AppLayoutState extends State<AppLayout> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
-            color: Colors.grey[850],
+            color: AppColors.darkGrey, // Popup arka planı Füme
             position: RelativeRect.fromLTRB(
               MediaQuery.of(context).size.width - 20,
               kToolbarHeight + 10,
@@ -130,7 +136,7 @@ class _AppLayoutState extends State<AppLayout> {
                 value: 'logout',
                 child: Row(
                   children: const [
-                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    Icon(Icons.logout, color: AppColors.primaryGreen, size: 20),
                     SizedBox(width: 12),
                     Text(
                       'Çıkış Yap',
@@ -163,8 +169,13 @@ class _AppLayoutState extends State<AppLayout> {
               const SizedBox(width: 8),
               const CircleAvatar(
                 radius: 14,
-                backgroundColor: Colors.redAccent,
-                child: Icon(Icons.person, size: 18, color: Colors.white),
+                backgroundColor:
+                    AppColors.primaryGreen, // Avatar zemini su yeşili
+                child: Icon(
+                  Icons.person,
+                  size: 18,
+                  color: AppColors.darkGrey,
+                ), // İkon füme
               ),
             ],
           ),
@@ -184,8 +195,11 @@ class _AppLayoutState extends State<AppLayout> {
       child: Stack(
         children: [
           Scaffold(
+            backgroundColor:
+                AppColors
+                    .background, // Scaffold arka plan: Açık Gri (Piramit Sol)
             appBar: AppBar(
-              backgroundColor: Colors.grey[900],
+              backgroundColor: AppColors.darkGrey, // AppBar: Füme (Piramit Sağ)
               elevation: 0,
               automaticallyImplyLeading: false,
               title: Row(

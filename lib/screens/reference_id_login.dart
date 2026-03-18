@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/screens/chair_availability_screen.dart';
 import 'package:rezervasyon_mobil/screens/user_login.dart';
 import '../providers/reference_login_provider.dart';
 
 class ReferenceIdLoginScreen extends StatefulWidget {
+  const ReferenceIdLoginScreen({super.key});
+
   @override
   _ReferenceIdLoginScreenState createState() => _ReferenceIdLoginScreenState();
 }
@@ -18,10 +21,12 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset:
+          false, // Klavye açıldığında tasarımın bozulmaması için
       body: Stack(
         children: [
-          // 🔥 ARKA PLAN (Sabit Karartma)
+          // 1. Arka Plan Resmi ve Füme Overlay
           Container(
             width: size.width,
             height: size.height,
@@ -30,200 +35,210 @@ class _ReferenceIdLoginScreenState extends State<ReferenceIdLoginScreen> {
                 image: const AssetImage('assets/images/barbershop.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4),
+                  AppColors.darkGrey.withOpacity(0.7),
                   BlendMode.darken,
                 ),
               ),
             ),
           ),
 
-          // 🔥 ORTADAKİ FORM (Tam Hizalı ve Kırmızı Tema)
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            alignment: Alignment.center,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-              child: Container(
-                width: size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(35),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Başlık ve İkon (Kırmızı Renk Ayarlandı)
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.qr_code_scanner,
-                          color: Colors.red.shade700,
-                          size: 40,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Reference ID Girişi',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.blueGrey.shade900,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 35),
-
-                    // 🔥 BELİRGİN TEXTBOX (Kırmızı Fokus ve Gri Dolgu)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: referenceCtrl,
-                        style: TextStyle(color: Colors.blueGrey.shade900),
-                        decoration: InputDecoration(
-                          labelText: 'Reference ID',
-                          labelStyle: TextStyle(
-                            color: Colors.blueGrey.shade500,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.vpn_key_outlined,
-                            color: Colors.red,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 18,
-                            horizontal: 20,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            borderSide: BorderSide(
-                              color: Colors.grey.shade300,
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            borderSide: BorderSide(
-                              color: Colors.red.shade400,
-                              width: 2,
-                            ),
-                          ),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 35),
-
-                    // 🔥 GİRİŞ BUTONU (Kırmızı)
-                    SizedBox(
-                      width: double.infinity,
-                      height: 58,
-                      child:
-                          provider.isLoading
-                              ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.red,
-                                ),
-                              )
-                              : ElevatedButton(
-                                onPressed: () async {
-                                  bool ok = await provider.loginWithReferenceId(
-                                    referenceCtrl.text.trim(),
-                                  );
-
-                                  if (ok && context.mounted) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => ChairAvailabilityScreen(),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Reference ID hatalı veya bulunamadı.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red.shade600,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  elevation: 5,
-                                ),
-                                child: const Text(
-                                  'Giriş Yap',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // 🔥 KULLANICI GİRİŞİ YÖNLENDİRME (Kırmızı Vurgulu Link)
-                    Column(
-                      children: [
-                        Text(
-                          "Kullanıcı olarak giriş yapmak ister misiniz?",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.blueGrey.shade600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => UserLogin()),
-                            );
-                          },
-                          child: Text(
-                            "Kullanıcı Girişi Yap",
-                            style: TextStyle(
-                              color: Colors.red.shade700,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          // 2. Geri Butonu
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 24,
               ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+
+          // 3. Form İçeriği (Dengeli Yükseklik)
+          SafeArea(
+            child: Column(
+              children: [
+                const Spacer(flex: 1), // Formu biraz yukarı iter
+                SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      // Başlık İkonu
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 50,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Referans Girişi',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Giriş Formu Kartı
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              "Reference ID",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "İşletme kodunu girerek devam edin",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Modern TextField
+                            _buildModernField(
+                              controller: referenceCtrl,
+                              hint: "Örn: REF12345",
+                              icon: Icons.vpn_key_rounded,
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // Giriş Butonu
+                            _buildLoginButton(provider),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(
+                  flex: 2,
+                ), // Alttan daha fazla boşluk bırakarak formu yukarıda tutar
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // ✅ MODERN GİRİŞ ALANI
+  Widget _buildModernField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(
+          color: AppColors.darkGrey,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.primaryGreen, size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ GİRİŞ BUTONU
+  Widget _buildLoginButton(ReferenceLoginProvider provider) {
+    return SizedBox(
+      width: double.infinity,
+      height: 58,
+      child:
+          provider.isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              )
+              : ElevatedButton(
+                onPressed: () async {
+                  bool ok = await provider.loginWithReferenceId(
+                    referenceCtrl.text.trim(),
+                  );
+
+                  if (ok && mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChairAvailabilityScreen(),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Reference ID hatalı veya bulunamadı.'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 8,
+                  shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  'GİRİŞ YAP',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
     );
   }
 }

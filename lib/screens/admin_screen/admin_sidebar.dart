@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart'; // Renk paletini dahil ettik
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_dashboard_screen.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_employee.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_update_screen.dart';
@@ -11,8 +12,10 @@ class AdminBottomBar extends StatelessWidget {
   const AdminBottomBar({super.key, required this.currentIndex});
 
   void _onTap(BuildContext context, int index) {
-    Widget page;
+    if (index == currentIndex)
+      return; // Zaten o sayfadaysak tekrar yükleme yapma
 
+    Widget page;
     switch (index) {
       case 0:
         page = AdminDashboardScreen();
@@ -27,31 +30,72 @@ class AdminBottomBar extends StatelessWidget {
         page = OwnerUpdateScreen();
         break;
       case 4:
-        page = AboutScreen();
+        page = const AboutScreen();
         break;
       default:
         return;
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFF1C1C1E), // koyu arka plan
-      currentIndex: currentIndex,
-      onTap: (index) => _onTap(context, index),
-      selectedItemColor: const Color(0xFFB1123C), // kırmızı ton
-      unselectedItemColor: Colors.white,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Panel'),
-        BottomNavigationBarItem(icon: Icon(Icons.chair), label: 'Koltuklar'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Personel'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Yönetici'),
-        BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Hakkında'),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withOpacity(
+              0.05,
+            ), // Çok ince bir üst sınır çizgisi
+            width: 1,
+          ),
+        ),
+      ),
+      child: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.darkGrey, // Arka plan: Füme
+        currentIndex: currentIndex,
+        onTap: (index) => _onTap(context, index),
+        selectedItemColor: AppColors.primaryGreen, // Seçili öğe: Su Yeşili
+        unselectedItemColor: Colors.white54, // Seçili olmayan: Mat Beyaz
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          letterSpacing: 0.5,
+        ),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Panel',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chair_alt_rounded),
+            label: 'Koltuklar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.badge_rounded),
+            label: 'Personel',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.admin_panel_settings_rounded),
+            label: 'Yönetici',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info_outline_rounded),
+            label: 'Hakkında',
+          ),
+        ],
+      ),
     );
   }
 }

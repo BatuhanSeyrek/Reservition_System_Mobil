@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 
 import '../providers/reservation_provider.dart';
 import '../models/reservation_model.dart';
@@ -80,9 +81,14 @@ class _ReservationUpdateDeleteScreenState
           });
       _cancelEdit();
       await context.read<ReservationUserProvider>().loadReservations(token!);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Randevu güncellendi!")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Randevu güncellendi!"),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+      }
     } catch (e) {
       _cancelEdit();
       await context.read<ReservationUserProvider>().loadReservations(token!);
@@ -108,101 +114,124 @@ class _ReservationUpdateDeleteScreenState
     );
   }
 
-  // --- 1. LİSTE GÖRÜNÜMÜ (7 ÖĞE İLE SINIRLANDIRILDI) ---
+  // --- 1. LİSTE GÖRÜNÜMÜ ---
   Widget _buildListView(ReservationUserProvider p) {
-    // ✅ Listeyi ters çevirip (en yeni en üstte) sadece ilk 7 tanesini alıyoruz
     final reservations = p.reservations.reversed.take(7).toList();
 
     if (reservations.isEmpty) {
-      return const Center(
-        child: Text(
-          "Randevunuz bulunmuyor.",
-          style: TextStyle(color: Colors.grey),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 60,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Randevunuz bulunmuyor.",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       itemCount: reservations.length,
       itemBuilder: (_, i) {
         final r = reservations[i];
         final isPast = _isPastReservation(r);
-
         return isPast ? _buildPastCard(r) : _buildActiveCard(r, p);
       },
     );
   }
 
-  // 🏛️ GEÇMİŞ RANDEVU TASARIMI
+  // 🏛️ GEÇMİŞ RANDEVU TASARIMI (Daha Soft)
   Widget _buildPastCard(Reservation r) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.history, color: Colors.grey, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  r.storeName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
+    return Opacity(
+      opacity: 0.7,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.history_rounded,
+                color: Colors.grey,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.storeName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkGrey,
+                    ),
                   ),
-                ),
-                Text(
-                  "${DateFormat('dd.MM.yyyy').format(DateTime.parse(r.reservationDate))} - ${_formatStringTime(r.startTime)}",
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
+                  Text(
+                    "${DateFormat('dd.MM.yyyy').format(DateTime.parse(r.reservationDate))} - ${_formatStringTime(r.startTime)}",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Text(
-            "GEÇMİŞ",
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+            const Text(
+              "BİTTİ",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ⚡ AKTİF RANDEVU TASARIMI
+  // ⚡ AKTİF RANDEVU TASARIMI (Premium Yeşil Temalı)
   Widget _buildActiveCard(Reservation r, ReservationUserProvider p) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withOpacity(0.08),
+            color: AppColors.darkGrey.withOpacity(0.05),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: IntrinsicHeight(
           child: Row(
             children: [
-              Container(width: 6, color: Colors.red.shade600),
+              Container(width: 6, color: AppColors.primaryGreen),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
                       Expanded(
@@ -212,47 +241,40 @@ class _ReservationUpdateDeleteScreenState
                             Text(
                               r.storeName,
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF1E293B),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 17,
+                                color: AppColors.darkGrey,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 4,
+                            const SizedBox(height: 12),
+                            Row(
                               children: [
-                                _infoRow(
-                                  Icons.calendar_month_outlined,
+                                _infoChip(
+                                  Icons.calendar_today_rounded,
                                   DateFormat(
                                     'dd.MM.yyyy',
                                   ).format(DateTime.parse(r.reservationDate)),
-                                  false,
                                 ),
-                                _infoRow(
-                                  Icons.access_time_rounded,
+                                const SizedBox(width: 12),
+                                _infoChip(
+                                  Icons.access_time_filled_rounded,
                                   _formatStringTime(r.startTime),
-                                  false,
                                 ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.edit_calendar_rounded,
-                          color: Colors.blueAccent,
-                        ),
-                        onPressed: () => _edit(r),
+                      _actionButton(
+                        Icons.edit_rounded,
+                        Colors.blueAccent,
+                        () => _edit(r),
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.redAccent,
-                        ),
-                        onPressed: () async {
+                      const SizedBox(width: 8),
+                      _actionButton(
+                        Icons.delete_sweep_rounded,
+                        Colors.redAccent,
+                        () async {
                           await p.deleteReservation(token!, r.id);
                           await p.loadReservations(token!);
                         },
@@ -268,176 +290,179 @@ class _ReservationUpdateDeleteScreenState
     );
   }
 
-  // --- DÜZENLEME GÖRÜNÜMÜ ---
+  // --- DÜZENLEME GÖRÜNÜMÜ (Modernize Edildi) ---
   Widget _buildEditView(ReservationUserProvider p) {
     return Container(
       width: double.infinity,
-      height: double.infinity,
-      alignment: Alignment.center,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.95),
-            borderRadius: BorderRadius.circular(35),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.edit_calendar_rounded,
-                size: 50,
-                color: Colors.red.shade700,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Randevuyu Düzenle",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.blueGrey.shade900,
+      color: AppColors.background,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 450),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(35),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                editing?.storeName ?? "",
-                style: TextStyle(
-                  color: Colors.red.shade700,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 25),
-              _buildModernDropdown(
-                label: "Koltuk Seçin",
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: chairId,
-                    isExpanded: true,
-                    items:
-                        p.chairs
-                            .map(
-                              (c) => DropdownMenuItem(
-                                value: c.id,
-                                child: Text(c.chairName),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (v) => setState(() => chairId = v),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit_calendar_rounded,
+                    size: 40,
+                    color: AppColors.primaryGreen,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: date!,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 30),
-                          ),
-                        );
-                        if (picked != null) setState(() => date = picked);
-                      },
-                      child: _buildValueBox(
-                        "Tarih",
-                        DateFormat('dd.MM.yyyy').format(date!),
-                        Icons.calendar_month,
+                const SizedBox(height: 20),
+                const Text(
+                  "Randevuyu Düzenle",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.darkGrey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  editing?.storeName ?? "",
+                  style: const TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 35),
+                _buildModernDropdown(
+                  label: "Hizmet Koltuğu",
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: chairId,
+                      isExpanded: true,
+                      borderRadius: BorderRadius.circular(20),
+                      items:
+                          p.chairs
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c.id,
+                                  child: Text(
+                                    c.chairName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (v) => setState(() => chairId = v),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: date!,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 30),
+                            ),
+                          );
+                          if (picked != null) setState(() => date = picked);
+                        },
+                        child: _buildValueBox(
+                          "Tarih",
+                          DateFormat('dd.MM.yyyy').format(date!),
+                          Icons.calendar_month_rounded,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: time!,
-                        );
-                        if (picked != null) setState(() => time = picked);
-                      },
-                      child: _buildValueBox(
-                        "Saat",
-                        _formatTime(time!),
-                        Icons.access_time,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          TimeOfDay? picked = await showTimePicker(
+                            context: context,
+                            initialTime: time!,
+                          );
+                          if (picked != null) setState(() => time = picked);
+                        },
+                        child: _buildValueBox(
+                          "Saat",
+                          _formatTime(time!),
+                          Icons.access_time_filled_rounded,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 58,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    elevation: 5,
-                  ),
-                  onPressed: _update,
+                  ],
+                ),
+                const SizedBox(height: 40),
+                _buildConfirmButton(),
+                TextButton(
+                  onPressed: _cancelEdit,
                   child: const Text(
-                    "GÜNCELLEMEYİ ONAYLA",
+                    "Vazgeç",
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                      color: Colors.grey,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: _cancelEdit,
-                child: const Text(
-                  "Vazgeç",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // --- UI YARDIMCILARI ---
+  // --- YARDIMCI WIDGETLAR ---
 
-  Widget _infoRow(IconData icon, String text, bool isPast) {
+  Widget _infoChip(IconData icon, String label) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: isPast ? Colors.grey.shade400 : Colors.red.shade400,
-        ),
+        Icon(icon, size: 14, color: AppColors.primaryGreen),
         const SizedBox(width: 4),
         Text(
-          text,
-          style: TextStyle(
+          label,
+          style: const TextStyle(
             fontSize: 13,
-            color: isPast ? Colors.grey.shade500 : Colors.blueGrey,
+            fontWeight: FontWeight.w600,
+            color: Colors.blueGrey,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, color: color, size: 22),
+      ),
     );
   }
 
@@ -445,23 +470,21 @@ class _ReservationUpdateDeleteScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 4),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
           ),
         ),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.shade300),
+            color: AppColors.background.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: child,
         ),
@@ -473,39 +496,64 @@ class _ReservationUpdateDeleteScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 4),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
           ),
         ),
+        const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.shade300),
+            color: AppColors.background.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: Colors.red.shade400),
+              Icon(icon, size: 18, color: AppColors.primaryGreen),
               const SizedBox(width: 8),
               Text(
                 value,
                 style: const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.darkGrey,
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildConfirmButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 58,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        onPressed: _update,
+        child: const Text(
+          "GÜNCELLEMEYİ ONAYLA",
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
 import 'package:rezervasyon_mobil/screens/user_sidebar.dart';
 import '../providers/auth_provider.dart';
@@ -17,28 +18,14 @@ class _AboutScreenState extends State<AboutScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
-  // Kurumsal Renk Paleti
-  final Color primaryBlue = const Color.fromARGB(
-    255,
-    38,
-    38,
-    38,
-  ); // Deep Ocean Blue
-  final Color lightBlue = const Color.fromARGB(255, 83, 84, 86);
-  final Color scaffoldBg = const Color(0xFFF8FAFC);
-  final Color cardColor = Colors.white;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
   }
 
@@ -56,7 +43,7 @@ class _AboutScreenState extends State<AboutScreen>
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
-          color: scaffoldBg,
+          color: AppColors.background,
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(
@@ -66,43 +53,36 @@ class _AboutScreenState extends State<AboutScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Modern Header Section
+                // 💎 MODERN & PREMIUM HEADER
                 _buildHeader(),
                 const SizedBox(height: 32),
 
                 _sectionLabel("SİSTEM ÇÖZÜMLERİMİZ"),
                 const SizedBox(height: 16),
 
-                // Dolu Dolu Özellik Listesi
                 _buildFeatureTile(
                   title: 'Merkezi Rezervasyon Paneli',
                   desc:
-                      'Tüm rezervasyonları tek bir ekranda toplayan, kullanıcı ve çalışan etkileşimini maksimize eden akıllı yönetim arayüzü.',
-                  icon: Icons.dashboard_customize_rounded,
+                      'Tüm randevuları tek merkezden yöneten, kullanıcı dostu akıllı arayüz.',
+                  icon: Icons.auto_awesome_motion_rounded,
                 ),
                 _buildFeatureTile(
                   title: 'Gelişmiş Dinamik Filtreleme',
                   desc:
-                      'ID, kullanıcı adı, personel ve koltuk numarasına göre saniyelik arama. Bugünün ve geleceğin planlarını anlık olarak ayırın.',
+                      'Personel, koltuk ve tarih bazlı anlık sorgulama ve planlama desteği.',
                   icon: Icons.manage_search_rounded,
                 ),
                 _buildFeatureTile(
-                  title: 'Veri Analitiği ve Excel Raporlama',
+                  title: 'Veri Analitiği & Raporlama',
                   desc:
-                      'Son 6 aya ait tüm geçmiş verileri PostgreSQL tabanlı sistemimizden çekerek profesyonel Excel formatında raporlayın.',
-                  icon: Icons.assessment_rounded,
+                      'İşletme verilerini PostgreSQL üzerinden çekerek Excel formatında raporlayın.',
+                  icon: Icons.analytics_rounded,
                 ),
                 _buildFeatureTile(
-                  title: 'Rol Bazlı Güvenlik Mimarisi',
+                  title: 'Docker & Spring Boot Gücü',
                   desc:
-                      'Admin ve standart kullanıcılar için özelleştirilmiş erişim seviyeleri ile veri güvenliğini en üst düzeyde tutun.',
-                  icon: Icons.security_update_good_rounded,
-                ),
-                _buildFeatureTile(
-                  title: 'Docker ve Spring Boot Entegrasyonu',
-                  desc:
-                      'Arka planda Java Spring Boot gücü ve Docker konteyner yapısıyla kesintisiz, ölçeklenebilir bir performans sunar.',
-                  icon: Icons.layers_rounded,
+                      'Java Spring Boot ve Docker mimarisiyle yüksek performanslı altyapı.',
+                  icon: Icons.terminal_rounded,
                 ),
 
                 const SizedBox(height: 32),
@@ -110,33 +90,34 @@ class _AboutScreenState extends State<AboutScreen>
                 _sectionLabel("PROJE MİMARLARI"),
                 const SizedBox(height: 16),
 
-                // Geliştirici Kartları
+                // GELİŞTİRİCİ KARTLARI
                 Row(
                   children: [
                     _buildDeveloperCard("Baran BATUR", "Backend Developer"),
                     const SizedBox(width: 12),
-                    _buildDeveloperCard("Batuhan SEYREK", "Java Developer"),
+                    _buildDeveloperCard("Batuhan SEYREK", "Flutter & Java Dev"),
                   ],
                 ),
 
                 const SizedBox(height: 40),
 
-                // Alt Bilgi
+                // FOOTER
                 Center(
                   child: Opacity(
-                    opacity: 0.6,
+                    opacity: 0.5,
                     child: Column(
                       children: [
-                        const Divider(),
+                        const Divider(thickness: 1),
                         const SizedBox(height: 10),
                         Text(
-                          "v1.0.0 - Rezervasyon Yönetim Sistemi",
+                          "v1.0.0 - KesTıraşı Rezervasyon Sistemi",
                           style: TextStyle(
-                            color: primaryBlue,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkGrey,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -155,48 +136,107 @@ class _AboutScreenState extends State<AboutScreen>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primaryBlue, lightBlue],
+        gradient: const LinearGradient(
+          colors: [AppColors.darkGrey, Color(0xFF3D3D3D)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: primaryBlue.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          const Icon(
-            Icons.business_center_rounded,
-            color: Colors.white,
-            size: 40,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Kurumsal Rezervasyon\nOtomasyonu',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
+          // Arka plan dekoratif daire
+          Positioned(
+            top: -30,
+            right: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            height: 3,
-            width: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(10),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_mosaic_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 30,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      "GÜNCEL",
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'KesTıraşı Kurumsal\nRezervasyon Sistemi',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Yüksek performanslı dijital dönüşüm çözümü',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                height: 4,
+                width: 45,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -207,10 +247,10 @@ class _AboutScreenState extends State<AboutScreen>
     return Text(
       label,
       style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.bold,
-        color: primaryBlue.withOpacity(0.8),
-        letterSpacing: 1.5,
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+        color: AppColors.darkGrey.withOpacity(0.7),
+        letterSpacing: 1.8,
       ),
     );
   }
@@ -224,13 +264,13 @@ class _AboutScreenState extends State<AboutScreen>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.blue.shade50),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.lightGrey.withOpacity(0.4)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -241,10 +281,10 @@ class _AboutScreenState extends State<AboutScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(14),
+              color: AppColors.primaryGreen.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: primaryBlue, size: 26),
+            child: Icon(icon, color: AppColors.primaryGreen, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -254,18 +294,18 @@ class _AboutScreenState extends State<AboutScreen>
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkGrey,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
                   desc,
                   style: TextStyle(
                     fontSize: 13,
-                    color: const Color.fromARGB(255, 80, 80, 80),
-                    height: 1.4,
+                    color: Colors.grey.shade600,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -279,29 +319,44 @@ class _AboutScreenState extends State<AboutScreen>
   Widget _buildDeveloperCard(String name, String role) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color.fromARGB(255, 31, 31, 31)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.lightGrey.withOpacity(0.6)),
         ),
         child: Column(
           children: [
-            CircleAvatar(
-              backgroundColor: primaryBlue.withOpacity(0.1),
-              radius: 20,
-              child: Icon(Icons.person, color: primaryBlue, size: 20),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.code_rounded,
+                color: AppColors.primaryGreen,
+                size: 22,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: AppColors.darkGrey,
+              ),
             ),
+            const SizedBox(height: 4),
             Text(
               role,
-              style: TextStyle(
-                fontSize: 11,
-                color: const Color.fromARGB(255, 86, 88, 89),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],

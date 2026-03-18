@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/providers/user_provideriki.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import 'package:rezervasyon_mobil/screens/user_sidebar.dart';
@@ -62,12 +63,22 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
 
     try {
       await context.read<UserProvider>().updateUser(token: token, data: data);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bilgiler başarıyla güncellendi')),
+        const SnackBar(
+          content: Text('Bilgileriniz başarıyla güncellendi'),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Güncelleme sırasında bir hata oluştu')),
+        const SnackBar(
+          content: Text('Güncelleme sırasında bir hata oluşti'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -77,118 +88,98 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
     final provider = context.watch<UserProvider>();
 
     if (!_initialized || provider.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (provider.user == null) {
       return const Scaffold(
-        body: Center(child: Text('Kullanıcı bilgisi bulunamadı')),
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryGreen),
+        ),
       );
     }
 
     return AppLayout(
-      body: Center(
+      body: Container(
+        color: AppColors.background,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              color: const Color.fromARGB(
-                255,
-                245,
-                245,
-                245,
-              ), // Biraz daha açık bir gri
-              elevation: 6,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            children: [
+              // 👤 Profil Başlık Alanı
+              _buildProfileHeader(provider.user?.userName ?? ""),
+              const SizedBox(height: 32),
+
+              // 📝 Form Kartı
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 450),
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Bilgilerini Güncelle',
+                      "Hesap Bilgileri",
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(
-                          255,
-                          255,
-                          82,
-                          82,
-                        ), // Kurumsal mavi
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkGrey,
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    _input('Ad Soyad', _userNameController),
-                    const SizedBox(height: 16),
-                    _input('E-posta Adresi', _emailController),
-                    const SizedBox(height: 16),
-                    _input('Telefon Numarası', _phoneController),
-                    const SizedBox(height: 16),
-
-                    DropdownButtonFormField<String>(
-                      value: _notificationType,
-                      decoration: const InputDecoration(
-                        labelText: 'Bildirim Tercihi',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.notifications_active_outlined),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'MAIL', child: Text('E-posta')),
-                        DropdownMenuItem(value: 'SMS', child: Text('SMS')),
-                        DropdownMenuItem(value: 'PUSH', child: Text('Hepsi')),
-                      ],
-                      onChanged: (v) => setState(() => _notificationType = v!),
+                    _buildModernInput(
+                      label: 'Ad Soyad',
+                      controller: _userNameController,
+                      icon: Icons.person_outline_rounded,
                     ),
+                    const SizedBox(height: 16),
+
+                    _buildModernInput(
+                      label: 'E-posta Adresi',
+                      controller: _emailController,
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildModernInput(
+                      label: 'Telefon Numarası',
+                      controller: _phoneController,
+                      icon: Icons.phone_android_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildDropdown(),
 
                     const SizedBox(height: 16),
 
-                    TextField(
+                    _buildModernInput(
+                      label: 'Yeni Şifre',
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Yeni Şifre',
-                        hintText: 'Değiştirmek istemiyorsanız boş bırakın',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
+                      icon: Icons.lock_outline_rounded,
+                      isPassword: true,
+                      hint: 'Değiştirmek istemiyorsanız boş bırakın',
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 32),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            255,
-                            82,
-                            82,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: _submit,
-                        child: const Text(
-                          'Güncelle',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildSubmitButton(),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
@@ -196,13 +187,141 @@ class _UserUpdateScreenState extends State<UserUpdateScreen> {
     );
   }
 
-  Widget _input(String label, TextEditingController c) {
-    return TextField(
-      controller: c,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        // Label kısmındaki "Label" yazısını düzelttim
+  Widget _buildProfileHeader(String name) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.primaryGreen, width: 2),
+          ),
+          child: const CircleAvatar(
+            radius: 40,
+            backgroundColor: AppColors.darkGrey,
+            child: Icon(
+              Icons.person_rounded,
+              size: 45,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          name,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: AppColors.darkGrey,
+          ),
+        ),
+        const Text(
+          "Profilini buradan güncelleyebilirsin",
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernInput({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    bool isPassword = false,
+    String? hint,
+    TextInputType? keyboardType,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        keyboardType: keyboardType,
+        style: const TextStyle(
+          color: AppColors.darkGrey,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+          labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.primaryGreen, size: 22),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _notificationType,
+        dropdownColor: Colors.white,
+        style: const TextStyle(
+          color: AppColors.darkGrey,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: const InputDecoration(
+          labelText: 'Bildirim Tercihi',
+          labelStyle: TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: Icon(
+            Icons.notifications_active_outlined,
+            color: AppColors.primaryGreen,
+            size: 22,
+          ),
+          border: InputBorder.none,
+        ),
+        items: const [
+          DropdownMenuItem(value: 'MAIL', child: Text('E-posta')),
+          DropdownMenuItem(value: 'SMS', child: Text('SMS')),
+          DropdownMenuItem(value: 'PUSH', child: Text('Uygulama İçi')),
+        ],
+        onChanged: (v) => setState(() => _notificationType = v!),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.white,
+          elevation: 5,
+          shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        onPressed: _submit,
+        child: const Text(
+          'DEĞİŞİKLİKLERİ KAYDET',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1,
+          ),
+        ),
       ),
     );
   }

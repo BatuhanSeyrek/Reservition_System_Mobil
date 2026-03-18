@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import '../../providers/admin_provider/chair_provider.dart';
 import '../../models/admin_model/chair_model.dart';
 import 'admin_layout.dart';
-import 'admin_sidebar.dart'; // AdminBottomBar
+import 'admin_sidebar.dart';
 
 class ChairDeleteUpdate extends StatefulWidget {
+  const ChairDeleteUpdate({super.key});
+
   @override
   _ChairDeleteUpdateState createState() => _ChairDeleteUpdateState();
 }
 
 class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
-  TextEditingController chairNameController = TextEditingController();
+  final TextEditingController chairNameController = TextEditingController();
   TimeOfDay? openingTime;
   TimeOfDay? closingTime;
-  TimeOfDay? islemSuresi;
+
+  // Süre Seçenekleri
+  final List<Map<String, dynamic>> durationOptions = [
+    {'label': '30 Dakika', 'value': '00:30:00'},
+    {'label': '45 Dakika', 'value': '00:45:00'},
+    {'label': '1 Saat', 'value': '01:00:00'},
+    {'label': '1.5 Saat', 'value': '01:30:00'},
+    {'label': '2 Saat', 'value': '02:00:00'},
+  ];
+  String? selectedDuration;
 
   bool editMode = false;
   bool isAdding = false;
@@ -30,39 +42,11 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
     });
   }
 
-  // Türkiye saat formatı 24 saat
-  String _formatTimeOfDay24(TimeOfDay? time) {
-    if (time == null) return '--:--';
-    final h = time.hour.toString().padLeft(2, '0');
-    final m = time.minute.toString().padLeft(2, '0');
-    return "$h:$m";
-  }
-
-  Future<TimeOfDay?> pickTime(TimeOfDay? initialTime) async {
-    return showTimePicker(
-      context: context,
-      initialTime: initialTime ?? TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Colors.grey[900],
-            colorScheme: ColorScheme.light(
-              primary: Colors.grey[900]!,
-              secondary: Colors.redAccent,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-  }
-
   void resetForm({bool keepAddingFlag = false}) {
     chairNameController.clear();
     openingTime = null;
     closingTime = null;
-    islemSuresi = null;
+    selectedDuration = null;
     editChairId = null;
     if (!keepAddingFlag) {
       editMode = false;
@@ -71,408 +55,432 @@ class _ChairDeleteUpdateState extends State<ChairDeleteUpdate> {
     setState(() {});
   }
 
-  Widget buildChairList(ChairProvider chairProvider) {
-    return chairProvider.isLoading
-        ? Center(child: CircularProgressIndicator(color: Colors.grey[900]))
-        : Scrollbar(
-          child: ListView.builder(
-            itemCount: chairProvider.chairs.length,
-            itemBuilder: (_, i) {
-              final chair = chairProvider.chairs[i];
-              return Card(
-                margin: EdgeInsets.only(bottom: 12),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ListTile(
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  title: Text(
-                    chair.chairName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.grey[900],
-                    ),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      "Açılış: ${chair.openingTime} - Kapanış: ${chair.closingTime} | İşlem Süresi: ${chair.islemSuresi}",
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit_note, color: Colors.redAccent),
-                        onPressed: () {
-                          setState(() {
-                            editMode = true;
-                            isAdding = false;
-                            editChairId = chair.id;
-                            chairNameController.text = chair.chairName;
-
-                            final openParts = chair.openingTime.split(":");
-                            openingTime = TimeOfDay(
-                              hour: int.parse(openParts[0]),
-                              minute: int.parse(openParts[1]),
-                            );
-
-                            final closeParts = chair.closingTime.split(":");
-                            closingTime = TimeOfDay(
-                              hour: int.parse(closeParts[0]),
-                              minute: int.parse(closeParts[1]),
-                            );
-
-                            final islemParts = chair.islemSuresi.split(":");
-                            islemSuresi = TimeOfDay(
-                              hour: int.parse(islemParts[0]),
-                              minute: int.parse(islemParts[1]),
-                            );
-                          });
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete_forever,
-                          color: Colors.red.shade700,
-                        ),
-                        onPressed:
-                            () => _showDeleteConfirmation(
-                              context,
-                              chairProvider,
-                              chair.id,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-  }
-
-  void _showDeleteConfirmation(
-    BuildContext context,
-    ChairProvider chairProvider,
-    int chairId,
-  ) {
-    showDialog(
+  Future<TimeOfDay?> pickTime(TimeOfDay? initialTime) async {
+    return showTimePicker(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Silme Onayı"),
-          content: const Text(
-            "Bu sandalyeyi kalıcı olarak silmek istediğinizden emin misiniz?",
+      initialTime: initialTime ?? const TimeOfDay(hour: 09, minute: 00),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryGreen,
+              onSurface: AppColors.darkGrey,
+            ),
           ),
-          actions: [
-            TextButton(
-              child: const Text("İptal", style: TextStyle(color: Colors.grey)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text(
-                "Sil",
-                style: TextStyle(color: Colors.redAccent),
-              ),
-              onPressed: () {
-                chairProvider.deleteChair(chairId);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+          child: child!,
         );
       },
-    );
-  }
-
-  Widget buildChairFormContent(ChairProvider chairProvider) {
-    return SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              editMode ? "Sandalyeyi Düzenle" : "Yeni Sandalye Ekle",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Colors.grey[900],
-              ),
-            ),
-            Divider(
-              height: 24,
-              thickness: 1.5,
-              color: Colors.grey[900]!.withOpacity(0.3),
-            ),
-            TextFormField(
-              controller: chairNameController,
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 10,
-                ),
-                labelText: "Sandalye Adı",
-                prefixIcon: Icon(Icons.chair_alt, color: Colors.grey[900]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty)
-                  return 'Lütfen bir sandalye adı giriniz.';
-                return null;
-              },
-            ),
-            SizedBox(height: 12),
-            _buildTimePickerListTile(
-              title: "Açılış Saati",
-              time: openingTime,
-              onTap: () async {
-                final time = await pickTime(openingTime);
-                if (time != null) setState(() => openingTime = time);
-              },
-            ),
-            SizedBox(height: 8),
-            _buildTimePickerListTile(
-              title: "Kapanış Saati",
-              time: closingTime,
-              onTap: () async {
-                final time = await pickTime(closingTime);
-                if (time != null) setState(() => closingTime = time);
-              },
-            ),
-            SizedBox(height: 8),
-            _buildTimePickerListTile(
-              title: "İşlem Süresi",
-              time: islemSuresi,
-              onTap: () async {
-                final time = await pickTime(islemSuresi);
-                if (time != null) setState(() => islemSuresi = time);
-              },
-            ),
-            SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    icon: Icon(
-                      editMode ? Icons.update : Icons.add_circle,
-                      size: 20,
-                    ),
-                    label: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10.0),
-                      child: Text(
-                        editMode ? "Güncelle" : "Ekle",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    onPressed: () {
-                      if (!_formKey.currentState!.validate()) return;
-                      if (openingTime == null ||
-                          closingTime == null ||
-                          islemSuresi == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Lütfen tüm saatleri seçiniz."),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                        return;
-                      }
-
-                      final chair = Chair(
-                        id: editChairId ?? 0,
-                        chairName: chairNameController.text,
-                        openingTime:
-                            "${openingTime!.hour.toString().padLeft(2, '0')}:${openingTime!.minute.toString().padLeft(2, '0')}:00",
-                        closingTime:
-                            "${closingTime!.hour.toString().padLeft(2, '0')}:${closingTime!.minute.toString().padLeft(2, '0')}:00",
-                        islemSuresi:
-                            "${islemSuresi!.hour.toString().padLeft(2, '0')}:${islemSuresi!.minute.toString().padLeft(2, '0')}:00",
-                      );
-
-                      if (editMode) {
-                        chairProvider.updateChair(editChairId!, chair);
-                      } else {
-                        chairProvider.addChair(chair);
-                      }
-
-                      resetForm();
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.grey[900],
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                if (editMode || isAdding) SizedBox(width: 8),
-                if (editMode || isAdding)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: Icon(
-                        Icons.cancel_outlined,
-                        color: Colors.grey[900],
-                        size: 20,
-                      ),
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0),
-                        child: Text(
-                          "İptal",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[900],
-                          ),
-                        ),
-                      ),
-                      onPressed: resetForm,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.grey[900]!.withOpacity(0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimePickerListTile({
-    required String title,
-    required TimeOfDay? time,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 1,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        dense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        title: Text(
-          "$title: ${_formatTimeOfDay24(time)}",
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-            color: Colors.grey[900],
-          ),
-        ),
-        trailing: Icon(Icons.access_time, color: Colors.redAccent, size: 20),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        tileColor: Colors.grey.shade50,
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final chairProvider = context.watch<ChairProvider>();
-    Widget formCard = Card(
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: buildChairFormContent(chairProvider),
-      ),
-    );
+    bool showForm = editMode || isAdding;
 
     return AppLayout(
-      body: Padding(
-        padding: EdgeInsets.all(33),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            bool showForm = editMode || isAdding;
-            bool isSmallScreen = constraints.maxWidth < 900;
-
-            if (isSmallScreen) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Container(
+        color: AppColors.background,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: Row(
                 children: [
-                  if (!showForm) Expanded(child: buildChairList(chairProvider)),
-                  if (showForm) Expanded(child: formCard),
-                  if (!showForm)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: ElevatedButton(
-                        child: Text(
-                          "Yeni Sandalye Ekle",
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        onPressed:
-                            () => setState(() {
-                              isAdding = true;
-                              editMode = false;
-                              resetForm(keepAddingFlag: true);
-                            }),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[900],
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            } else {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (showForm)
-                    Expanded(
-                      flex: 40,
-                      child: SizedBox(
-                        height: constraints.maxHeight - 66,
-                        child: formCard,
-                      ),
-                    ),
-                  if (showForm) SizedBox(width: 33),
-                  Expanded(
-                    flex: showForm ? 60 : 100,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: buildChairList(chairProvider)),
-                        if (!showForm)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: ElevatedButton(
-                              child: Text(
-                                "Yeni Sandalye Ekle",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              onPressed:
-                                  () => setState(() {
-                                    isAdding = true;
-                                    editMode = false;
-                                    resetForm(keepAddingFlag: true);
-                                  }),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[900],
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
-                      ],
+                  Icon(Icons.chair_alt_rounded, color: AppColors.darkGrey),
+                  SizedBox(width: 10),
+                  Text(
+                    "Koltuk Yönetimi",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.darkGrey,
                     ),
                   ),
                 ],
-              );
-            }
-          },
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  _buildChairList(chairProvider),
+                  if (showForm)
+                    Positioned.fill(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: _buildChairForm(chairProvider),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!showForm)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text("YENİ SANDALYE EKLE"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkGrey,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () => setState(() => isAdding = true),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
       bottomBar: const AdminBottomBar(currentIndex: 1),
+    );
+  }
+
+  // --- LİSTELEME (TAŞMA SORUNU GİDERİLDİ) ---
+  Widget _buildChairList(ChairProvider provider) {
+    if (provider.isLoading)
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryGreen),
+      );
+    if (provider.chairs.isEmpty)
+      return const Center(child: Text("Henüz koltuk eklenmemiş."));
+
+    return ListView.builder(
+      itemCount: provider.chairs.length,
+      padding: const EdgeInsets.only(bottom: 100),
+      itemBuilder: (_, i) {
+        final chair = provider.chairs[i];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.event_seat_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        chair.chairName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.darkGrey,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${chair.openingTime.substring(0, 5)} - ${chair.closingTime.substring(0, 5)} | Süre: ${chair.islemSuresi.substring(0, 5)}",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.blueGrey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.edit_note_rounded,
+                        color: Colors.blueAccent,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          editMode = true;
+                          editChairId = chair.id;
+                          chairNameController.text = chair.chairName;
+                          openingTime = _parseTime(chair.openingTime);
+                          closingTime = _parseTime(chair.closingTime);
+                          selectedDuration = chair.islemSuresi;
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.redAccent,
+                      ),
+                      onPressed: () => _confirmDelete(provider, chair.id),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- FORM TASARIMI (DROPDOWN EKLENDİ) ---
+  Widget _buildChairForm(ChairProvider provider) {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              editMode ? "Düzenle" : "Yeni Ekle",
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            const Divider(height: 30),
+
+            _buildInputLabel("Koltuk Adı"),
+            TextFormField(
+              controller: chairNameController,
+              decoration: _inputDeco(Icons.chair_rounded, "Örn: Koltuk 1"),
+              validator: (v) => v!.isEmpty ? "Ad boş olamaz" : null,
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _timeBox("Açılış", openingTime, () async {
+                    final t = await pickTime(openingTime);
+                    if (t != null) setState(() => openingTime = t);
+                  }),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _timeBox("Kapanış", closingTime, () async {
+                    final t = await pickTime(closingTime);
+                    if (t != null) setState(() => closingTime = t);
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildInputLabel("İşlem Süresi"),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.background.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButtonFormField<String>(
+                  value: selectedDuration,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    prefixIcon: Icon(
+                      Icons.timer_outlined,
+                      color: AppColors.primaryGreen,
+                      size: 20,
+                    ),
+                  ),
+                  items:
+                      durationOptions
+                          .map(
+                            (e) => DropdownMenuItem<String>(
+                              value: e['value'],
+                              child: Text(
+                                e['label'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (v) => setState(() => selectedDuration = v),
+                  validator: (v) => v == null ? "Süre seçin" : null,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _save(provider),
+              child: Text(
+                editMode ? "GÜNCELLE" : "KAYDET",
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            TextButton(
+              onPressed: resetForm,
+              child: const Text("Vazgeç", style: TextStyle(color: Colors.grey)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- YARDIMCI METODLAR ---
+  void _save(ChairProvider provider) {
+    if (!_formKey.currentState!.validate() ||
+        openingTime == null ||
+        closingTime == null)
+      return;
+    final chair = Chair(
+      id: editChairId ?? 0,
+      chairName: chairNameController.text,
+      openingTime: _toFullTime(openingTime!),
+      closingTime: _toFullTime(closingTime!),
+      islemSuresi: selectedDuration!,
+    );
+    editMode
+        ? provider.updateChair(editChairId!, chair)
+        : provider.addChair(chair);
+    resetForm();
+  }
+
+  String _toFullTime(TimeOfDay t) =>
+      "${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00";
+
+  TimeOfDay _parseTime(String t) {
+    final p = t.split(":");
+    return TimeOfDay(hour: int.parse(p[0]), minute: int.parse(p[1]));
+  }
+
+  void _confirmDelete(ChairProvider provider, int id) {
+    showDialog(
+      context: context,
+      builder:
+          (c) => AlertDialog(
+            title: const Text("Silinsin mi?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("Hayır"),
+              ),
+              TextButton(
+                onPressed: () {
+                  provider.deleteChair(id);
+                  Navigator.pop(c);
+                },
+                child: const Text("Evet", style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildInputLabel(String label) => Padding(
+    padding: const EdgeInsets.only(left: 4, bottom: 6),
+    child: Text(
+      label,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey,
+      ),
+    ),
+  );
+
+  InputDecoration _inputDeco(IconData icon, String hint) => InputDecoration(
+    hintText: hint,
+    prefixIcon: Icon(icon, color: AppColors.primaryGreen, size: 20),
+    filled: true,
+    fillColor: AppColors.background.withOpacity(0.5),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+  );
+
+  Widget _timeBox(String label, TimeOfDay? time, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.background.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 16,
+                  color: AppColors.primaryGreen,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  time == null
+                      ? "--:--"
+                      : "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

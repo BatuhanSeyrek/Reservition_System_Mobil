@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/providers/store_provider.dart';
 import 'package:rezervasyon_mobil/models/user_model/store_models.dart';
 import 'package:rezervasyon_mobil/screens/user_chair_screen.dart';
@@ -60,43 +61,47 @@ class _AllStoresScreenState extends State<AllStoresScreen> {
 
     return AppLayout(
       bottomBar: const UserBottomBar(currentIndex: 0),
-      body: Column(
-        children: [
-          _FilterBar(provider: provider),
-          Expanded(
-            child:
-                provider.isLoading
-                    ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFB1123C),
+      body: Container(
+        color: AppColors.background,
+        child: Column(
+          children: [
+            _FilterBar(provider: provider),
+            Expanded(
+              child:
+                  provider.isLoading
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryGreen,
+                        ),
+                      )
+                      : stores.isEmpty
+                      ? const _EmptyState()
+                      : RefreshIndicator(
+                        color: AppColors.primaryGreen,
+                        onRefresh: _setupInitialData,
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          itemCount: stores.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                mainAxisExtent:
+                                    235, // Kartlar için nefes alan bir alan
+                              ),
+                          itemBuilder: (_, i) => _StoreCard(store: stores[i]),
+                        ),
                       ),
-                    )
-                    : stores.isEmpty
-                    ? const _EmptyState()
-                    : RefreshIndicator(
-                      onRefresh: _setupInitialData,
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: stores.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              mainAxisExtent:
-                                  205, // Beyaz boşluğu azaltmak için ideal yükseklik
-                            ),
-                        itemBuilder: (_, i) => _StoreCard(store: stores[i]),
-                      ),
-                    ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/* ================= FİLTRELEME ÇUBUĞU ================= */
+/* ================= PROFESYONEL FİLTRELEME ÇUBUĞU ================= */
 class _FilterBar extends StatelessWidget {
   final StoreProvider provider;
   const _FilterBar({required this.provider});
@@ -104,28 +109,43 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black12)],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.darkGrey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          const Icon(
+            Icons.tune_rounded,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: _Dropdown(
-              hint: "İl",
+              hint: "İl Seçin",
               value:
                   provider.selectedCity.isEmpty ? null : provider.selectedCity,
               items: provider.availableCities,
               onChanged: (v) => provider.updateLocationFilter(v ?? "", ""),
             ),
           ),
-          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Container(width: 1, height: 20, color: Colors.grey.shade200),
+          ),
           Expanded(
             child: _Dropdown(
-              hint: "İlçe",
+              hint: "İlçe Seçin",
               value:
                   provider.selectedDistrict.isEmpty
                       ? null
@@ -139,7 +159,11 @@ class _FilterBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.redAccent, size: 22),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.primaryGreen,
+              size: 20,
+            ),
             onPressed: () => provider.clearFilters(),
           ),
         ],
@@ -166,13 +190,32 @@ class _Dropdown extends StatelessWidget {
       child: DropdownButton<String>(
         value: value,
         isExpanded: true,
-        hint: Text(hint, style: const TextStyle(fontSize: 12)),
+        hint: Text(
+          hint,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        icon: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 16,
+          color: Colors.grey,
+        ),
         items:
             items
                 .map(
                   (e) => DropdownMenuItem(
                     value: e,
-                    child: Text(e, style: const TextStyle(fontSize: 12)),
+                    child: Text(
+                      e,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
                   ),
                 )
                 .toList(),
@@ -182,7 +225,7 @@ class _Dropdown extends StatelessWidget {
   }
 }
 
-/* ================= MAĞAZA KARTI ================= */
+/* ================= PREMIUM MAĞAZA KARTI ================= */
 class _StoreCard extends StatelessWidget {
   final StoreResponse store;
   const _StoreCard({required this.store});
@@ -192,7 +235,6 @@ class _StoreCard extends StatelessWidget {
     final provider = context.watch<StoreProvider>();
     final isFav = provider.isFavorite(store.store.id);
 
-    // Mesafe Hesaplama
     String distanceText = "";
     if (provider.userLatitude != null &&
         store.address?.latitude != null &&
@@ -207,11 +249,9 @@ class _StoreCard extends StatelessWidget {
           distanceInMeters < 1000
               ? "${distanceInMeters.toStringAsFixed(0)} m"
               : "${(distanceInMeters / 1000).toStringAsFixed(1)} km";
-      if (distanceInMeters < 15) distanceText = "Buradasınız";
     }
 
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
       onTap:
           () => Navigator.push(
             context,
@@ -219,186 +259,169 @@ class _StoreCard extends StatelessWidget {
               builder: (_) => ChairAvailabilityScreen(adminId: store.admin.id),
             ),
           ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: const [
-                BoxShadow(blurRadius: 8, color: Colors.black12),
-              ],
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.darkGrey.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Column(
+          children: [
+            // Üst Görsel/İkon Alanı
+            Stack(
               children: [
-                // Üst Mavi/Lacivert Alan (Kısalmadı, 55 birim sabit)
                 Container(
-                  height: 55,
+                  height: 80,
+                  width: double.infinity,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                      colors: [AppColors.darkGrey, Color(0xFF475569)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(18),
+                      top: Radius.circular(24),
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       FontAwesomeIcons.store,
-                      color: Colors.white24,
-                      size: 24,
+                      color: Colors.white.withOpacity(0.15),
+                      size: 32,
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => provider.toggleFavorite(store.store.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFav
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        size: 16,
+                        color: isFav ? Colors.redAccent : Colors.grey,
+                      ),
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+              ],
+            ),
+            // İçerik Alanı
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    store.store.storeName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.darkGrey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    store.admin.adminName,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (store.address != null)
+                    _LocationBadge(text: store.address!.district),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        store.store.storeName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        store.admin.adminName,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-
-                      if (store.address != null)
-                        _LocationChip(
-                          "${store.address!.city} / ${store.address!.district}",
-                        ),
-
-                      const SizedBox(height: 4),
-
-                      // Mesafe Yazısı
                       if (distanceText.isNotEmpty)
                         Row(
                           children: [
                             const Icon(
-                              Icons.near_me,
-                              size: 10,
-                              color: Colors.blueAccent,
+                              Icons.near_me_rounded,
+                              size: 12,
+                              color: AppColors.primaryGreen,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               distanceText,
                               style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueGrey,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primaryGreen,
                               ),
                             ),
                           ],
                         ),
-
-                      const SizedBox(height: 8),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _IconCount(
-                            icon: FontAwesomeIcons.chair,
-                            count: store.chairs.length,
+                          const Icon(
+                            FontAwesomeIcons.chair,
+                            size: 10,
+                            color: Colors.blueGrey,
                           ),
-                          _IconCount(
-                            icon: FontAwesomeIcons.userTie,
-                            count: store.employees.length,
+                          const SizedBox(width: 4),
+                          Text(
+                            "${store.chairs.length}",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.darkGrey,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Favori Butonu
-          Positioned(
-            top: 8,
-            right: 8,
-            child: GestureDetector(
-              onTap: () => provider.toggleFavorite(store.store.id),
-              child: CircleAvatar(
-                radius: 14,
-                backgroundColor: isFav ? Colors.white : Colors.black26,
-                child: Icon(
-                  isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                  size: 13,
-                  color: isFav ? Colors.redAccent : Colors.white,
-                ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 /* ================= YARDIMCI BİLEŞENLER ================= */
-class _IconCount extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  const _IconCount({required this.icon, required this.count});
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 12, color: Colors.blueGrey),
-        const SizedBox(width: 4),
-        Text(
-          "$count",
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-}
-
-class _LocationChip extends StatelessWidget {
+class _LocationBadge extends StatelessWidget {
   final String text;
-  const _LocationChip(this.text);
+  const _LocationBadge({required this.text});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.primaryGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.location_on, size: 10, color: Colors.redAccent),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 9,
-                color: Colors.redAccent,
-                fontWeight: FontWeight.w600,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          color: AppColors.primaryGreen,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -408,15 +431,28 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(FontAwesomeIcons.mapLocationDot, size: 40, color: Colors.grey),
-          SizedBox(height: 10),
-          Text(
-            "Bu bölgede işletme bulunmuyor",
-            style: TextStyle(color: Colors.grey, fontSize: 13),
+          Icon(
+            FontAwesomeIcons.mapLocationDot,
+            size: 50,
+            color: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Seçili bölgede işletme bulunamadı",
+            style: TextStyle(
+              color: AppColors.darkGrey,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Filtreleri sıfırlamayı deneyebilirsiniz.",
+            style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),
