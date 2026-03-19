@@ -18,6 +18,7 @@ class _UserRegisterState extends State<UserRegister> {
   final TextEditingController _passwordController = TextEditingController();
 
   String _notificationType = "MAIL";
+  bool _kvkkApproved = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +26,10 @@ class _UserRegisterState extends State<UserRegister> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset:
-          false, // Klavye açıldığında tasarımın yukarı fırlamasını önler
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 1. Arka Plan Resmi ve Filtre (Login ile Aynı)
+          // 1. Arka Plan
           Container(
             width: size.width,
             height: size.height,
@@ -38,7 +38,7 @@ class _UserRegisterState extends State<UserRegister> {
                 image: const AssetImage('assets/images/barbershop.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  AppColors.darkGrey.withOpacity(0.7),
+                  AppColors.darkGrey.withOpacity(0.75),
                   BlendMode.darken,
                 ),
               ),
@@ -59,34 +59,19 @@ class _UserRegisterState extends State<UserRegister> {
             ),
           ),
 
-          // 3. Form İçeriği (Login gibi yukarı taşınmış yapı)
+          // 3. İçerik
           SafeArea(
             child: Column(
               children: [
-                const Spacer(flex: 1), // Üstten boşluk (Formu yukarı iter)
+                const Spacer(flex: 1),
                 SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      // Başlık İkonu (Login stilinde halkalı ikon)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.person_add_rounded,
-                          color: AppColors.primaryGreen,
-                          size: 50,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      _buildHeaderIcon(),
+                      const SizedBox(height: 15),
                       const Text(
-                        'Yeni Hesap Oluştur',
+                        'Yeni Hesap',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -94,13 +79,12 @@ class _UserRegisterState extends State<UserRegister> {
                           letterSpacing: 1,
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
 
-                      // Giriş Formu Kartı
                       Container(
                         width: double.infinity,
                         constraints: const BoxConstraints(maxWidth: 400),
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(28),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(32),
@@ -115,7 +99,7 @@ class _UserRegisterState extends State<UserRegister> {
                         child: Column(
                           children: [
                             _buildModernInput(
-                              label: "Tam İsim",
+                              label: "Kullanıcı Adı",
                               controller: _userNameController,
                               icon: Icons.person_outline_rounded,
                             ),
@@ -140,7 +124,12 @@ class _UserRegisterState extends State<UserRegister> {
                               icon: Icons.lock_outline_rounded,
                               isPassword: true,
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 12),
+
+                            // ✅ KVKK Alanı (Pop-up Tıklamalı)
+                            _buildKvkkCheckboxWithPopup(),
+
+                            const SizedBox(height: 24),
                             _buildRegisterButton(),
                           ],
                         ),
@@ -148,28 +137,8 @@ class _UserRegisterState extends State<UserRegister> {
                     ],
                   ),
                 ),
-                const Spacer(
-                  flex: 2,
-                ), // Alttan boşluk (Formun yukarıda kalmasını sağlar)
-                // Giriş Yap Linki (Daha aşağıda, formun dışında)
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(fontSize: 14, color: Colors.white70),
-                      children: [
-                        TextSpan(text: "Zaten hesabınız var mı? "),
-                        TextSpan(
-                          text: "Giriş Yap",
-                          style: TextStyle(
-                            color: AppColors.primaryGreen,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                const Spacer(flex: 2),
+                _buildLoginLink(),
                 const SizedBox(height: 20),
               ],
             ),
@@ -179,7 +148,101 @@ class _UserRegisterState extends State<UserRegister> {
     );
   }
 
-  // ✅ MODERN DROPDOWN
+  // ✅ KVKK Checkbox ve Pop-up Mantığı
+  Widget _buildKvkkCheckboxWithPopup() {
+    return Theme(
+      data: ThemeData(unselectedWidgetColor: Colors.grey),
+      child: CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _kvkkApproved,
+        activeColor: AppColors.primaryGreen,
+        onChanged: (val) => setState(() => _kvkkApproved = val ?? false),
+        controlAffinity: ListTileControlAffinity.leading,
+        dense: true,
+        title: GestureDetector(
+          onTap: _showKvkkDialog, // Tıklanınca Pop-up açar
+          child: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.darkGrey,
+                fontWeight: FontWeight.w600,
+              ),
+              children: [
+                TextSpan(text: "KVKK Aydınlatma Metni"),
+                TextSpan(
+                  text: "'ni okudum, onaylıyorum.",
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ KVKK Pop-up Penceresi
+  void _showKvkkDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "KVKK Aydınlatma Metni",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            content: const SingleChildScrollView(
+              child: Text(
+                "Kişisel verileriniz, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında, "
+                "uygulama içi hizmetlerin sunulması, randevu oluşturulması ve iletişim süreçlerinin yönetilmesi "
+                "amacıyla işlenmektedir. \n\n"
+                "Verileriniz güvenli sunucularda saklanmakta olup, üçüncü taraflarla yasal zorunluluklar dışında paylaşılmamaktadır. "
+                "Hesabınızı dilediğiniz zaman silme ve verilerinizin güncellenmesini talep etme hakkınız saklıdır.",
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Kapat",
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildHeaderIcon() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: const Icon(
+        Icons.person_add_rounded,
+        color: AppColors.primaryGreen,
+        size: 45,
+      ),
+    );
+  }
+
   Widget _buildDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -189,6 +252,7 @@ class _UserRegisterState extends State<UserRegister> {
       ),
       child: DropdownButtonFormField<String>(
         value: _notificationType,
+        dropdownColor: Colors.white,
         style: const TextStyle(
           color: AppColors.darkGrey,
           fontWeight: FontWeight.w600,
@@ -196,7 +260,7 @@ class _UserRegisterState extends State<UserRegister> {
         decoration: const InputDecoration(
           border: InputBorder.none,
           labelText: "Bildirim Türü",
-          labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+          labelStyle: TextStyle(color: Colors.grey, fontSize: 12),
           icon: Icon(
             Icons.notifications_active_outlined,
             color: AppColors.primaryGreen,
@@ -213,7 +277,6 @@ class _UserRegisterState extends State<UserRegister> {
     );
   }
 
-  // ✅ MODERN TEXTFIELD (Login stiliyle birebir aynı)
   Widget _buildModernInput({
     required String label,
     required TextEditingController controller,
@@ -234,7 +297,7 @@ class _UserRegisterState extends State<UserRegister> {
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+          labelStyle: const TextStyle(color: Colors.grey, fontSize: 12),
           prefixIcon: Icon(icon, color: AppColors.primaryGreen, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -246,40 +309,41 @@ class _UserRegisterState extends State<UserRegister> {
     );
   }
 
-  // ✅ KAYIT BUTONU
   Widget _buildRegisterButton() {
     return SizedBox(
       width: double.infinity,
       height: 58,
       child: ElevatedButton(
         onPressed: () async {
-          // Kayıt işlemi mantığı...
+          if (_userNameController.text.isEmpty ||
+              _passwordController.text.isEmpty) {
+            _showSnackBar("Lütfen tüm alanları doldurun.", Colors.orange);
+            return;
+          }
+          if (!_kvkkApproved) {
+            _showSnackBar("Lütfen KVKK metnini onaylayın.", Colors.redAccent);
+            return;
+          }
+
           final request = User(
             userName: _userNameController.text,
             email: _emailController.text,
             phoneNumber: _phoneController.text,
             notificationType: _notificationType,
             password: _passwordController.text,
+            kvkk: _kvkkApproved,
           );
 
           try {
             await context.read<RegisterProvider>().registerUser(
               request.toJson(),
             );
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kayıt Başarılı!'),
-                backgroundColor: AppColors.primaryGreen,
-              ),
-            );
+            if (!mounted) return;
+            _showSnackBar("Kayıt Başarılı!", AppColors.primaryGreen);
             Navigator.pop(context);
           } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kayıt Başarısız.'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
+            if (!mounted) return;
+            _showSnackBar("Kayıt sırasında hata oluştu.", Colors.redAccent);
           }
         },
         style: ElevatedButton.styleFrom(
@@ -294,11 +358,43 @@ class _UserRegisterState extends State<UserRegister> {
         child: const Text(
           "KAYIT OL",
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: 1,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoginLink() {
+    return TextButton(
+      onPressed: () => Navigator.pop(context),
+      child: RichText(
+        text: const TextSpan(
+          style: TextStyle(fontSize: 14, color: Colors.white70),
+          children: [
+            TextSpan(text: "Zaten hesabınız var mı? "),
+            TextSpan(
+              text: "Giriş Yap",
+              style: TextStyle(
+                color: AppColors.primaryGreen,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

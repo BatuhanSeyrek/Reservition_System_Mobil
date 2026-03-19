@@ -4,6 +4,7 @@ class User {
   final String notificationType;
   final String userName;
   final String password;
+  final bool kvkk; // ✅ Yeni eklendi
 
   User({
     required this.email,
@@ -11,7 +12,9 @@ class User {
     required this.notificationType,
     required this.userName,
     required this.password,
+    required this.kvkk, // ✅ Gerekli yapıldı
   });
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       email: json['email'],
@@ -19,8 +22,10 @@ class User {
       notificationType: json['notificationType'],
       userName: json['userName'],
       password: json['password'],
+      kvkk: json['kvkk'] ?? false, // ✅ JSON dönüşümü
     );
   }
+
   Map<String, dynamic> toJson() {
     return {
       'email': email,
@@ -28,6 +33,7 @@ class User {
       'notificationType': notificationType,
       'userName': userName,
       'password': password,
+      'kvkk': kvkk, // ✅ Backend'e gönderilecek alan
     };
   }
 }
