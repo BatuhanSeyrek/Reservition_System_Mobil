@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
 import 'package:rezervasyon_mobil/screens/user_sidebar.dart';
 import '../../providers/user_chair_provider.dart';
@@ -37,273 +38,387 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
     });
   }
 
+  String formatTurkishDate(String dateStr) {
+    try {
+      DateTime dt = DateTime.parse(dateStr);
+      List<String> months = [
+        "",
+        "Ocak",
+        "Şubat",
+        "Mart",
+        "Nisan",
+        "Mayıs",
+        "Haziran",
+        "Temmuz",
+        "Ağustos",
+        "Eylül",
+        "Ekim",
+        "Kasım",
+        "Aralık",
+      ];
+      return "${dt.day} ${months[dt.month]} ${dt.year}";
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  void _showInactiveAlert() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          "Şu an aktif değil",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.orange.shade800,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (chairProvider == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryGreen),
+        ),
+      );
     }
 
     return ChangeNotifierProvider.value(
       value: chairProvider!,
       child: Consumer<ChairProvider>(
         builder: (context, provider, _) {
-          Widget bodyContent;
-
           if (provider.isLoading) {
-            bodyContent = const Center(child: CircularProgressIndicator());
-          } else if (provider.error != null) {
-            bodyContent = Center(child: Text("Hata: ${provider.error}"));
-          } else if (provider.chairs.isEmpty) {
-            bodyContent = const Center(child: Text("Hiç koltuk bulunamadı."));
-          } else {
-            final currentChairName =
-                provider.selectedChairName ??
-                (provider.chairs.isNotEmpty
-                    ? provider.chairs.first.chairName
-                    : "");
-
-            final selectedChair = provider.chairs.firstWhere(
-              (c) => c.chairName == currentChairName,
-              orElse: () => provider.chairs.first,
-            );
-
-            final currentDate = provider.selectedDate;
-            final slots =
-                (currentDate != null)
-                    ? (selectedChair.slots[currentDate] ?? {})
-                    : {};
-
-            final slotsList = slots.entries.toList();
-
-            bodyContent = Container(
-              color: const Color(0xFFF9F5F9),
-              child: Column(
-                children: [
-                  // --- HEADER ---
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 5),
-                            child: const Icon(
-                              Icons.calendar_today_rounded,
-                              color: Color(0xFFA81B39),
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  "Koltuk\nDurumu",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1A1F3D),
-                                    height: 1.2,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Tarih ve Sandalye seçerek müsaitlikleri görüntüleyin",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            children: [
-                              _buildCustomDropdown(
-                                value: currentDate,
-                                items: provider.availableDates,
-                                hint: "Tarih",
-                                onChanged: (val) {
-                                  if (val != null)
-                                    provider.setSelectedDate(val);
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                              _buildCustomDropdown(
-                                value: currentChairName,
-                                items:
-                                    provider.chairs
-                                        .map((c) => c.chairName)
-                                        .toList(),
-                                hint: "Sandalye",
-                                onChanged: (val) {
-                                  if (val != null)
-                                    provider.setSelectedChair(val);
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // --- SLOT LİSTESİ ---
-                  Expanded(
-                    child:
-                        slots.isEmpty
-                            ? const Center(
-                              child: Text("Bu tarih için saat bulunamadı."),
-                            )
-                            : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
-                              itemCount: slotsList.length,
-                              itemBuilder: (context, index) {
-                                final entry = slotsList[index];
-                                final time = entry.key;
-                                final available = entry.value;
-
-                                return GestureDetector(
-                                  onTap:
-                                      available
-                                          ? () => _showReservationDialog(
-                                            context,
-                                            provider,
-                                            selectedChair.chairId,
-                                            selectedChair.chairName,
-                                            time,
-                                          )
-                                          : null,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal: 16,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          available
-                                              ? const Color(0xFFCBECCB)
-                                              : const Color(0xFFFFCDD2),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          time,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 5,
-                                            horizontal: 12,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                available
-                                                    ? const Color(0xFF4CAF50)
-                                                    : const Color(0xFFD32F2F),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            available ? "Müsait" : "Dolu",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                  ),
-                ],
+            return const Scaffold(
+              backgroundColor: AppColors.background,
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
               ),
             );
           }
 
+          if (provider.error != null) {
+            return Scaffold(
+              body: Center(child: Text("Hata: ${provider.error}")),
+            );
+          }
+
+          if (provider.chairs.isEmpty) {
+            return _buildEmptyStateScaffold(
+              "Bu işletmede şu an aktif bir sandalye tanımlanmamıştır.",
+            );
+          }
+
+          final currentChairName =
+              provider.selectedChairName ?? provider.chairs.first.chairName;
+          final selectedChair = provider.chairs.firstWhere(
+            (c) => c.chairName == currentChairName,
+            orElse: () => provider.chairs.first,
+          );
+          final currentDate = provider.selectedDate;
+          final slots =
+              (currentDate != null)
+                  ? (selectedChair.slots[currentDate] ?? {})
+                  : {};
+          final slotsList = slots.entries.toList();
+
           return AppLayout(
-            body: bodyContent,
-            // 🔥 USER BOTTOM BAR EKLENDİ
             bottomBar: const UserBottomBar(currentIndex: 0),
+            body: Column(
+              children: [
+                _buildHeaderCard(provider, currentDate, currentChairName),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 15),
+                          child: Text(
+                            "Müsaitlik Durumu",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child:
+                              slotsList.isEmpty
+                                  ? _buildEmptyContentPlaceholder()
+                                  : ListView.builder(
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: slotsList.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildSlotItem(
+                                        context,
+                                        provider,
+                                        selectedChair.chairId,
+                                        selectedChair.chairName,
+                                        slotsList[index].key,
+                                        slotsList[index].value,
+                                        provider.selectedDate ?? "",
+                                      );
+                                    },
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildCustomDropdown({
-    required String? value,
+  Widget _buildSlotItem(
+    BuildContext context,
+    ChairProvider provider,
+    int chairId,
+    String chairName,
+    String time,
+    bool availableInDB,
+    String selectedDate,
+  ) {
+    DateTime now = DateTime.now();
+    String todayStr = now.toString().split(' ')[0];
+    bool isToday = selectedDate == todayStr;
+    String currentTime =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
+    bool isExpired = isToday && time.compareTo(currentTime) < 0;
+    bool isActive = availableInDB && !isExpired;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap:
+            isActive
+                ? () => _showReservationDialog(
+                  context,
+                  provider,
+                  chairId,
+                  chairName,
+                  time,
+                )
+                : _showInactiveAlert,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color:
+                isActive
+                    ? AppColors.background.withOpacity(0.4)
+                    : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color:
+                  isActive
+                      ? AppColors.primaryGreen.withOpacity(0.1)
+                      : Colors.transparent,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.access_time_rounded,
+                size: 20,
+                color: isActive ? AppColors.primaryGreen : Colors.grey,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: isActive ? AppColors.darkGrey : Colors.grey,
+                  decoration: isExpired ? TextDecoration.lineThrough : null,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 12,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isActive
+                          ? AppColors.primaryGreen
+                          : (isExpired
+                              ? Colors.orange.shade300
+                              : Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isActive ? "MÜSAİT" : (isExpired ? "GEÇMİŞ" : "DOLU"),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderCard(
+    ChairProvider provider,
+    String? currentDate,
+    String? currentChairName,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.event_available_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Hızlı Planlama",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkGrey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSmallDropdown(
+                    val: currentDate,
+                    items: provider.availableDates,
+                    // 🔥 Hata burada düzeltildi: val geliyorsa provider metodunu çağır
+                    onChanged: (val) {
+                      if (val != null) provider.setSelectedDate(val);
+                    },
+                    isDate: true,
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildSmallDropdown(
+                    val: currentChairName,
+                    items: provider.chairs.map((c) => c.chairName).toList(),
+                    // 🔥 Hata burada düzeltildi
+                    onChanged: (val) {
+                      if (val != null) provider.setSelectedChair(val);
+                    },
+                    icon: Icons.chair_alt_rounded,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🔥 Dropdown yapısı null-safe ve esnek hale getirildi
+  Widget _buildSmallDropdown({
+    required String? val,
     required List<String> items,
     required Function(String?) onChanged,
-    String hint = "Seçiniz",
+    bool isDate = false,
+    required IconData icon,
   }) {
-    String? effectiveValue = value;
-    if (effectiveValue != null && !items.contains(effectiveValue)) {
-      effectiveValue = null;
-    }
-    if (effectiveValue == null && items.isNotEmpty) {
-      effectiveValue = items.first;
-    }
-
     return Container(
-      width: 140,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
+        color: AppColors.background.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: effectiveValue,
-          isExpanded: true,
-          hint: Text(hint, style: const TextStyle(fontSize: 12)),
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.primaryGreen),
+          const SizedBox(width: 6),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value:
+                    items.contains(val)
+                        ? val
+                        : (items.isNotEmpty ? items.first : null),
+                isExpanded: true,
+                icon: const Icon(
+                  Icons.arrow_drop_down_rounded,
+                  color: AppColors.primaryGreen,
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.darkGrey,
+                  fontWeight: FontWeight.bold,
+                ),
+                items:
+                    items
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              isDate ? formatTurkishDate(e) : e,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                onChanged:
+                    onChanged, // Parametre olarak geçilen fonksiyonu çalıştırır
+              ),
+            ),
           ),
-          items:
-              items
-                  .map(
-                    (item) => DropdownMenuItem(
-                      value: item,
-                      child: Text(item, overflow: TextOverflow.ellipsis),
-                    ),
-                  )
-                  .toList(),
-          onChanged: onChanged,
-        ),
+        ],
       ),
     );
   }
@@ -319,7 +434,13 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text("Rezervasyonu Onayla"),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: const Text(
+              "Rezervasyonu Onayla",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             content: Text(
               "$chairName için $time saatini rezerve etmek istiyor musunuz?",
             ),
@@ -329,8 +450,17 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                 child: const Text("Hayır"),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text("Evet"),
+                child: const Text(
+                  "Evet",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -339,5 +469,64 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
     if (confirmed == true) {
       await provider.reserveSlot(chairId, time);
     }
+  }
+
+  Widget _buildEmptyStateScaffold(String message) {
+    return AppLayout(
+      bottomBar: const UserBottomBar(currentIndex: 0),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.event_busy_rounded,
+                size: 60,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Şu An Aktif Değil",
+              style: TextStyle(
+                color: AppColors.darkGrey,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyContentPlaceholder() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.hourglass_empty_rounded, size: 40, color: Colors.grey),
+          SizedBox(height: 10),
+          Text(
+            "Uygun saat bulunamadı.",
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 }

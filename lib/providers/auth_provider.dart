@@ -12,51 +12,59 @@ class AuthProvider with ChangeNotifier {
   AuthResponse? get user => _user;
 
   AdminModel? _admin;
-  AdminModel? get admin => _admin; // Navbar ve diğer sayfalarda kullanılacak
+  AdminModel? get admin => _admin;
 
-  // Admin login artık username ve password ile
   Future<void> loginAdmin(String username, String password) async {
     _user = await _authService.loginAdmin(username, password);
-    await _storage.writeToken(_user!.token);
-
-    // Admin bilgilerini çek
-    await fetchAdminData();
-
+    if (_user != null) {
+      await _storage.writeToken(_user!.token);
+      await fetchAdminData();
+    }
     notifyListeners();
   }
 
-  void clearUserAndAdmin() {
-    _user = null;
-    _admin = null;
-    notifyListeners();
-  }
-
-  // User login
   Future<void> loginUser(String username, String password) async {
     _user = await _authService.loginUser(username, password);
-    await _storage.writeToken(_user!.token);
+    if (_user != null) {
+      await _storage.writeToken(_user!.token);
+    }
     notifyListeners();
   }
 
-  // Admin bilgilerini çekme
   Future<void> fetchAdminData() async {
-    if (_user == null) return;
-
-    final data = await _authService.getMyAdmin(_user!.token);
-    _admin = AdminModel.fromJson(data);
-    notifyListeners();
+    final token = await _storage.readToken();
+    if (token == null) return;
+    try {
+      final data = await _authService.getMyAdmin(token);
+      _admin = AdminModel.fromJson(data);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Admin verisi çekilemedi: $e");
+    }
   }
 
-  // Uygulama açıldığında token kontrolü
   Future<bool> tryAutoLogin() async {
     final token = await _storage.readToken();
-    if (token == null) return false;
-    return true;
+    if (token == null || token.isEmpty) return false;
+
+    try {
+      // HATA BURADAYDI: Modeldeki zorunlu alanları id: 0 ve name: "" diyerek geçiyoruz
+      _user = AuthResponse(token: token, id: 0, name: "");
+
+      // Admin verilerini çekmeyi dene
+      await fetchAdminData();
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      await logout();
+      return false;
+    }
   }
 
-  // Logout işlemi
   Future<void> logout() async {
     _user = null;
+    _admin = null;
     await _storage.deleteToken();
     notifyListeners();
   }

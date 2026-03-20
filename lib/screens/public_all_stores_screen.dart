@@ -66,10 +66,11 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
     return AppLayout(
       bottomBar: _buildFakeBottomBar(),
       body: Container(
-        color: AppColors.background, // Piramit açık gri zemin
+        color: AppColors.background,
         child: Column(
           children: [
-            _buildLocationPicker(provider),
+            // Profesyonel Filtre Çubuğu
+            _FilterBar(provider: provider),
             Expanded(
               child:
                   provider.isLoading
@@ -79,137 +80,28 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
                         ),
                       )
                       : stores.isEmpty
-                      ? const Center(
-                        child: Text(
-                          "Bu bölgede dükkan bulunamadı.",
-                          style: TextStyle(color: AppColors.darkGrey),
-                        ),
-                      )
+                      ? const _EmptyState()
                       : RefreshIndicator(
                         color: AppColors.primaryGreen,
                         onRefresh: _initializeData,
                         child: GridView.builder(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                           itemCount: stores.length,
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisExtent:
-                                    195, // Kart boyutu hafif artırıldı
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                mainAxisExtent: 235,
                               ),
                           itemBuilder: (context, index) {
-                            final storeData = stores[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            PublicChairavailabilityscreen(
-                                              adminId: storeData.admin.id,
-                                            ),
-                                  ),
-                                );
-                              },
-                              child: _StoreCard(storeData: storeData),
-                            );
+                            return _StoreCard(store: stores[index]);
                           },
                         ),
                       ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLocationPicker(StoreProvider provider) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.lightGrey),
-        boxShadow: [
-          BoxShadow(color: AppColors.darkGrey.withOpacity(0.05), blurRadius: 8),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _styledDropdown(
-              hint: "İl Seç",
-              value:
-                  provider.selectedCity.isEmpty ? null : provider.selectedCity,
-              items: provider.availableCities,
-              onChanged: (val) => provider.updateLocationFilter(val!, ""),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _styledDropdown(
-              hint: "İlçe Seç",
-              value:
-                  provider.selectedDistrict.isEmpty
-                      ? null
-                      : provider.selectedDistrict,
-              items: provider.availableDistricts,
-              onChanged:
-                  (val) => provider.updateLocationFilter(
-                    provider.selectedCity,
-                    val!,
-                  ),
-            ),
-          ),
-          if (provider.selectedCity.isNotEmpty)
-            IconButton(
-              onPressed: () => provider.clearFilters(),
-              icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _styledDropdown({
-    required String hint,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: value,
-        hint: Text(
-          hint,
-          style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
-        ),
-        isExpanded: true,
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          size: 18,
-          color: AppColors.primaryGreen,
-        ),
-        items:
-            items
-                .map(
-                  (e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(
-                      e,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.darkGrey,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-        onChanged: onChanged,
       ),
     );
   }
@@ -247,45 +139,21 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_person_rounded,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  "Giriş Yapın",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ],
+            title: const Text(
+              "Giriş Yapın",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: const Text(
               "Daha fazla işlem yapabilmek için lütfen hesabınıza giriş yapın.",
-              style: TextStyle(color: Colors.grey),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  "Vazgeç",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text("Vazgeç"),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
-                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -299,10 +167,7 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
                 },
                 child: const Text(
                   "Giriş Yap",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -311,146 +176,259 @@ class _PublicAllStoresScreenState extends State<PublicAllStoresScreen> {
   }
 }
 
+/* ================= PROFESYONEL FİLTRELEME ÇUBUĞU ================= */
+class _FilterBar extends StatelessWidget {
+  final StoreProvider provider;
+  const _FilterBar({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.darkGrey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.tune_rounded,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _Dropdown(
+              hint: "İl Seçin",
+              value:
+                  provider.selectedCity.isEmpty ? null : provider.selectedCity,
+              items: provider.availableCities,
+              onChanged: (v) => provider.updateLocationFilter(v ?? "", ""),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Container(width: 1, height: 20, color: Colors.grey.shade200),
+          ),
+          Expanded(
+            child: _Dropdown(
+              hint: "İlçe Seçin",
+              value:
+                  provider.selectedDistrict.isEmpty
+                      ? null
+                      : provider.selectedDistrict,
+              items: provider.availableDistricts,
+              onChanged:
+                  (v) => provider.updateLocationFilter(
+                    provider.selectedCity,
+                    v ?? "",
+                  ),
+            ),
+          ),
+          if (provider.selectedCity.isNotEmpty)
+            IconButton(
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: AppColors.primaryGreen,
+                size: 20,
+              ),
+              onPressed: () => provider.clearFilters(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ================= ÖZEL DROPDOWN BİLEŞENİ ================= */
+class _Dropdown extends StatelessWidget {
+  final String hint;
+  final String? value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  const _Dropdown({
+    required this.hint,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        hint: Text(
+          hint,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        icon: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 16,
+          color: Colors.grey,
+        ),
+        items:
+            items
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(
+                      e,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+/* ================= MAĞAZA KARTI ================= */
 class _StoreCard extends StatelessWidget {
-  final StoreResponse storeData;
-  const _StoreCard({required this.storeData});
+  final StoreResponse store;
+  const _StoreCard({required this.store});
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StoreProvider>();
     String distanceText = "";
 
-    // Mesafe hesaplama mantığı...
     if (provider.userLatitude != null &&
-        provider.userLongitude != null &&
-        storeData.address?.latitude != null &&
-        storeData.address?.longitude != null &&
-        storeData.address!.latitude != 0.0) {
+        store.address?.latitude != null &&
+        store.address!.latitude != 0.0) {
       double distanceInMeters = Geolocator.distanceBetween(
         provider.userLatitude!,
         provider.userLongitude!,
-        storeData.address!.latitude,
-        storeData.address!.longitude,
+        store.address!.latitude,
+        store.address!.longitude,
       );
-      if (distanceInMeters < 5) {
-        distanceText = "Buradasınız";
-      } else if (distanceInMeters < 1000) {
-        distanceText = "${distanceInMeters.toStringAsFixed(0)} m";
-      } else {
-        distanceText = "${(distanceInMeters / 1000).toStringAsFixed(1)} km";
-      }
+      distanceText =
+          distanceInMeters < 1000
+              ? "${distanceInMeters.toStringAsFixed(0)} m"
+              : "${(distanceInMeters / 1000).toStringAsFixed(1)} km";
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightGrey.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return InkWell(
+      onTap:
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => PublicChairavailabilityscreen(adminId: store.admin.id),
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              Container(
-                height: 70,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.storefront_rounded,
-                    color: Colors.white30,
-                    size: 35,
-                  ),
-                ),
-              ),
-              if (distanceText.isNotEmpty)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkGrey.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      distanceText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.darkGrey.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Stack(
               children: [
-                Text(
-                  storeData.store.storeName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColors.darkGrey,
+                Container(
+                  height: 80,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.darkGrey, Color(0xFF475569)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_rounded,
-                      size: 12,
-                      color: AppColors.primaryGreen,
+                  child: Center(
+                    child: Icon(
+                      FontAwesomeIcons.store,
+                      color: Colors.white.withOpacity(0.15),
+                      size: 32,
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        "${storeData.address?.district}",
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.primaryGreen,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _infoBadge(Icons.chair_alt, "${storeData.chairs.length}"),
-                    _infoBadge(
-                      Icons.person_search_rounded,
-                      "${storeData.employees.length}",
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    store.store.storeName,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.darkGrey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  if (store.address != null)
+                    _LocationBadge(text: store.address!.district),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (distanceText.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.near_me_rounded,
+                              size: 12,
+                              color: AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              distanceText,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      _infoBadge(
+                        FontAwesomeIcons.chair,
+                        "${store.chairs.length}",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -458,17 +436,68 @@ class _StoreCard extends StatelessWidget {
   Widget _infoBadge(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.primaryGreen.withOpacity(0.7)),
+        Icon(icon, size: 10, color: Colors.blueGrey),
         const SizedBox(width: 4),
         Text(
           label,
           style: const TextStyle(
             fontSize: 11,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w900,
             color: AppColors.darkGrey,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LocationBadge extends StatelessWidget {
+  final String text;
+  const _LocationBadge({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          color: AppColors.primaryGreen,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            FontAwesomeIcons.mapLocationDot,
+            size: 50,
+            color: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Seçili bölgede işletme bulunamadı",
+            style: TextStyle(
+              color: AppColors.darkGrey,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

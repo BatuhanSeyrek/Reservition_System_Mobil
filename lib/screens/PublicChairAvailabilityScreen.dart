@@ -31,7 +31,6 @@ class _PublicchairavailabilityscreenState
     setState(() => chairProvider = provider);
   }
 
-  // Tarihi Türk formatına çeviren yardımcı fonksiyon
   String formatTurkishDate(String dateStr) {
     try {
       DateTime dt = DateTime.parse(dateStr);
@@ -56,6 +55,21 @@ class _PublicchairavailabilityscreenState
     }
   }
 
+  void _showInactiveAlert() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          "Şu an aktif değil",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.orange.shade800,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _showRestrictedAccessAlert() {
     showDialog(
       context: context,
@@ -65,45 +79,21 @@ class _PublicchairavailabilityscreenState
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_person_rounded,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  "Giriş Yapın",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ],
+            title: const Text(
+              "Giriş Yapın",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: const Text(
               "Randevu alabilmek için önce giriş yapmanız gerekmektedir.",
-              style: TextStyle(color: Colors.black54),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  "Vazgeç",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text("Vazgeç"),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
-                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -116,11 +106,8 @@ class _PublicchairavailabilityscreenState
                   );
                 },
                 child: const Text(
-                  "Hemen Giriş Yap",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  "Giriş Yap",
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -149,6 +136,13 @@ class _PublicchairavailabilityscreenState
               body: Center(
                 child: CircularProgressIndicator(color: AppColors.primaryGreen),
               ),
+            );
+          }
+
+          // 🔥 KRİTİK HATA ÇÖZÜMÜ: Sandalye yoksa direkt şık boş ekranı göster
+          if (provider.chairs.isEmpty) {
+            return _buildEmptyStateScaffold(
+              "Bu işletmede şu an aktif bir hizmet alanı (sandalye) tanımlanmamıştır.",
             );
           }
 
@@ -190,23 +184,14 @@ class _PublicchairavailabilityscreenState
             body: Column(
               children: [
                 _buildHeaderCard(provider, currentDate, currentChairName),
-
-                // 🔹 SAAT LİSTESİ PANELİ (Taşma sorunu giderildi)
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.fromLTRB(
-                      20,
-                      0,
-                      20,
-                      20,
-                    ), // Alttan 20px boşluk bırakıldı
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(
-                        32,
-                      ), // Panel köşeleri tamamen yuvarlatıldı
+                      borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
@@ -232,12 +217,7 @@ class _PublicchairavailabilityscreenState
                         Expanded(
                           child:
                               slotsList.isEmpty
-                                  ? const Center(
-                                    child: Text(
-                                      "Seçili tarih için uygun saat bulunamadı.",
-                                      style: TextStyle(color: Colors.grey),
-                                    ),
-                                  )
+                                  ? _buildEmptyContentPlaceholder()
                                   : ListView.builder(
                                     physics: const BouncingScrollPhysics(),
                                     itemCount: slotsList.length,
@@ -245,6 +225,7 @@ class _PublicchairavailabilityscreenState
                                       return _buildSlotItem(
                                         slotsList[index].key,
                                         slotsList[index].value,
+                                        provider.selectedDate ?? "",
                                       );
                                     },
                                   ),
@@ -262,23 +243,113 @@ class _PublicchairavailabilityscreenState
     );
   }
 
-  Widget _buildSlotItem(String time, bool available) {
+  // 🎨 Tasarımla uyumlu tam sayfa Boş Durum
+  Widget _buildEmptyStateScaffold(String message) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.darkGrey,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.primaryGreen,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Randevu Seçimi",
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: InkWell(
+        onTap: _showInactiveAlert,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(30),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.event_busy_rounded,
+                  size: 60,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Şu An Aktif Değil",
+                style: TextStyle(
+                  color: AppColors.darkGrey,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Panel içindeki küçük boşluk uyarısı
+  Widget _buildEmptyContentPlaceholder() {
+    return InkWell(
+      onTap: _showInactiveAlert,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.hourglass_empty_rounded, size: 40, color: Colors.grey),
+            SizedBox(height: 10),
+            Text(
+              "Uygun saat bulunamadı.",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlotItem(String time, bool availableInDB, String selectedDate) {
+    DateTime now = DateTime.now();
+    String todayStr = now.toString().split(' ')[0];
+    bool isToday = selectedDate == todayStr;
+    String currentTime =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
+    bool isExpired = isToday && time.compareTo(currentTime) < 0;
+    bool isActive = availableInDB && !isExpired;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: _showRestrictedAccessAlert,
+        onTap: isActive ? _showRestrictedAccessAlert : _showInactiveAlert,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color:
-                available
+                isActive
                     ? AppColors.background.withOpacity(0.4)
-                    : Colors.grey.shade50,
+                    : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color:
-                  available
+                  isActive
                       ? AppColors.primaryGreen.withOpacity(0.1)
                       : Colors.transparent,
             ),
@@ -288,7 +359,7 @@ class _PublicchairavailabilityscreenState
               Icon(
                 Icons.access_time_rounded,
                 size: 20,
-                color: available ? AppColors.primaryGreen : Colors.grey,
+                color: isActive ? AppColors.primaryGreen : Colors.grey,
               ),
               const SizedBox(width: 12),
               Text(
@@ -296,7 +367,8 @@ class _PublicchairavailabilityscreenState
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: available ? AppColors.darkGrey : Colors.grey,
+                  color: isActive ? AppColors.darkGrey : Colors.grey,
+                  decoration: isExpired ? TextDecoration.lineThrough : null,
                 ),
               ),
               const Spacer(),
@@ -307,16 +379,19 @@ class _PublicchairavailabilityscreenState
                 ),
                 decoration: BoxDecoration(
                   color:
-                      available ? AppColors.primaryGreen : Colors.grey.shade300,
+                      isActive
+                          ? AppColors.primaryGreen
+                          : (isExpired
+                              ? Colors.orange.shade300
+                              : Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  available ? "MÜSAİT" : "DOLU",
+                  isActive ? "MÜSAİT" : (isExpired ? "GEÇMİŞ" : "DOLU"),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 10,
-                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -460,8 +535,6 @@ class _PublicchairavailabilityscreenState
       backgroundColor: AppColors.darkGrey,
       selectedItemColor: AppColors.primaryGreen,
       unselectedItemColor: Colors.white54,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.store_rounded),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rezervasyon_mobil/core/app_colors.dart';
 import 'package:rezervasyon_mobil/providers/reference_chair_provider.dart';
 import 'package:rezervasyon_mobil/screens/admin_screen/admin_layout.dart';
-import 'package:rezervasyon_mobil/screens/admin_screen/admin_sidebar.dart';
 
 class ChairAvailabilityScreen extends StatefulWidget {
   @override
@@ -15,15 +15,42 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
   String surname = '';
   String phone = '';
 
-  Color primary = const Color(0xFF14183e);
-  Color accent = const Color(0xFF9c1132);
-  Color softAccent = const Color(0xFF821034);
-
   @override
   void initState() {
     super.initState();
-    // ignore: use_build_context_synchronously
-    Future.microtask(() => context.read<RefenceChairProvider>().loadChairs());
+    Future.microtask(() async {
+      final provider = context.read<RefenceChairProvider>();
+      await provider.loadChairs();
+
+      // Otomatik ilk sandalyeyi seçme mantığı
+      if (provider.chairs.isNotEmpty && provider.selectedChairName.isEmpty) {
+        provider.changeChairName(provider.chairs.first.chairName);
+      }
+    });
+  }
+
+  String formatTurkishDate(String dateStr) {
+    try {
+      DateTime dt = DateTime.parse(dateStr);
+      List<String> months = [
+        "",
+        "Ocak",
+        "Şubat",
+        "Mart",
+        "Nisan",
+        "Mayıs",
+        "Haziran",
+        "Temmuz",
+        "Ağustos",
+        "Eylül",
+        "Ekim",
+        "Kasım",
+        "Aralık",
+      ];
+      return "${dt.day} ${months[dt.month]} ${dt.year}";
+    } catch (e) {
+      return dateStr;
+    }
   }
 
   @override
@@ -32,179 +59,230 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            ),
           );
         }
 
         return AppLayout(
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildHeader(provider),
+          body: Column(
+            children: [
+              _buildHeaderCard(provider),
 
-                const SizedBox(height: 20),
-
-                Expanded(
-                  child:
-                      provider.selectedChairName.isEmpty
-                          ? _buildEmptyPlaceholder()
-                          : ListView(children: _buildChairSlots(provider)),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, bottom: 15),
+                        child: Text(
+                          "Müsaitlik Durumu",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child:
+                            provider.chairs.isEmpty
+                                ? _buildNoChairPlaceholder()
+                                : provider.selectedChairName.isEmpty
+                                ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                )
+                                : ListView(
+                                  physics: const BouncingScrollPhysics(),
+                                  children: _buildChairSlots(provider),
+                                ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildHeader(RefenceChairProvider provider) {
+  Widget _buildHeaderCard(RefenceChairProvider provider) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            offset: Offset(0, 3),
-            blurRadius: 10,
-            color: Colors.black12,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_month, size: 35, color: accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
               children: [
-                Text(
-                  "Koltuk Durumu",
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: primary,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.event_seat_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 24,
                   ),
                 ),
-                Text(
-                  "Tarih ve Sandalye seçerek müsaitlikleri görüntüleyin",
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                const SizedBox(width: 12),
+                const Text(
+                  "Koltuk Durumu",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkGrey,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _styledDropdown(
-                value:
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSmallDropdown(
                     provider.selectedDate.isEmpty
                         ? null
                         : provider.selectedDate,
-                hint: "Tarih",
-                items: provider.availableDates,
-                onChange: provider.changeDate,
-              ),
-              const SizedBox(height: 8),
-              _styledDropdown(
-                value:
+                    provider.availableDates,
+                    provider.changeDate,
+                    isDate: true,
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildSmallDropdown(
                     provider.selectedChairName.isEmpty
                         ? null
                         : provider.selectedChairName,
-                hint: "Sandalye",
-                items: provider.chairs.map((e) => e.chairName).toList(),
-                onChange: provider.changeChairName,
-              ),
-            ],
-          ),
-        ],
+                    provider.chairs.map((e) => e.chairName).toList(),
+                    provider.changeChairName,
+                    icon: Icons.chair_alt_rounded,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _styledDropdown({
-    required String? value,
-    required String hint,
-    required List<String> items,
-    required Function(String) onChange,
+  Widget _buildSmallDropdown(
+    String? val,
+    List<String> items,
+    Function(String) onChange, {
+    bool isDate = false,
+    required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: AppColors.background.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: DropdownButton<String>(
-        underline: const SizedBox(),
-        hint: Text(hint),
-        value: value,
-        items:
-            items
-                .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                .toList(),
-        onChanged: (v) => onChange(v!),
-      ),
-    );
-  }
-
-  Widget _buildEmptyPlaceholder() {
-    return Center(
-      child: Text(
-        "Lütfen bir sandalye seçin.",
-        style: TextStyle(fontSize: 17, color: Colors.grey.shade600),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.primaryGreen),
+          const SizedBox(width: 6),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value:
+                    items.contains(val)
+                        ? val
+                        : (items.isNotEmpty ? items.first : null),
+                isExpanded: true,
+                icon: const Icon(
+                  Icons.arrow_drop_down_rounded,
+                  color: AppColors.primaryGreen,
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.darkGrey,
+                  fontWeight: FontWeight.bold,
+                ),
+                items:
+                    items
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              isDate ? formatTurkishDate(e) : e,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (v) => onChange(v!),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   List<Widget> _buildChairSlots(RefenceChairProvider provider) {
+    if (provider.selectedChairName.isEmpty) return [];
+
     final chair = provider.chairs.firstWhere(
       (c) => c.chairName == provider.selectedChairName,
+      orElse: () => provider.chairs.first,
     );
-
     final slots = chair.slots[provider.selectedDate] ?? {};
+
+    // --- ZAMAN KONTROLÜ MANTIĞI ---
+    DateTime now = DateTime.now();
+    String todayStr = now.toString().split(' ')[0]; // yyyy-MM-dd
+    bool isToday = provider.selectedDate == todayStr;
+    String currentTime =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
     return slots.entries.map((e) {
       final time = e.key;
-      final available = e.value;
+      bool isAvailableInDB = e.value;
 
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: available ? Colors.green.shade100 : Colors.red.shade100,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              offset: Offset(0, 2),
-              blurRadius: 6,
-              color: Colors.black12,
-            ),
-          ],
-        ),
-        child: ListTile(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          title: Text(
-            time,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-          ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: available ? Colors.green : Colors.red,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              available ? "Müsait" : "Dolu",
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
+      // Bugünse ve saati geçmişse 'expired' olur
+      bool isExpired = isToday && time.compareTo(currentTime) < 0;
+      bool canSelect = isAvailableInDB && !isExpired;
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: InkWell(
           onTap:
-              available
+              canSelect
                   ? () => _openReservationDialog(
                     context,
                     provider,
@@ -212,9 +290,91 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
                     time,
                   )
                   : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:
+                  canSelect
+                      ? AppColors.background.withOpacity(0.4)
+                      : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color:
+                    canSelect
+                        ? AppColors.primaryGreen.withOpacity(0.1)
+                        : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 20,
+                  color:
+                      canSelect ? AppColors.primaryGreen : Colors.grey.shade400,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  time,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        canSelect ? AppColors.darkGrey : Colors.grey.shade400,
+                    decoration:
+                        isExpired
+                            ? TextDecoration.lineThrough
+                            : null, // Geçmişse üstünü çiz
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        canSelect
+                            ? AppColors.primaryGreen
+                            : (isExpired
+                                ? Colors.orange.shade300
+                                : Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    canSelect ? "MÜSAİT" : (isExpired ? "GEÇMİŞ" : "DOLU"),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }).toList();
+  }
+
+  Widget _buildNoChairPlaceholder() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.chair_alt_rounded, size: 48, color: Colors.grey),
+          SizedBox(height: 10),
+          Text(
+            "Henüz bir sandalye tanımlanmamış.",
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openReservationDialog(
@@ -226,73 +386,76 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
     name = '';
     surname = '';
     phone = '';
-
     showDialog(
       context: ctx,
-      builder: (dctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            "Müşteri Bilgileri",
-            style: TextStyle(color: softAccent, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _inputField("Ad", (v) => name = v),
-              _inputField("Soyad", (v) => surname = v),
-              _inputField("Telefon", (v) => phone = v, isPhone: true),
-              const SizedBox(height: 8),
-              Text("Seçilen Saat: $time"),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text("İptal"),
-              onPressed: () => Navigator.pop(dctx),
+      builder:
+          (dctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            title: const Text(
+              "Müşteri Kaydı",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkGrey,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _inputField("Ad", (v) => name = v),
+                _inputField("Soyad", (v) => surname = v),
+                _inputField("Telefon", (v) => phone = v, isPhone: true),
+                const SizedBox(height: 10),
+                Text(
+                  "Saat: $time",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dctx),
+                child: const Text(
+                  "İptal",
+                  style: TextStyle(color: Colors.grey),
                 ),
               ),
-              child: const Text("Onayla"),
-              onPressed: () async {
-                if (name.isEmpty || surname.isEmpty || phone.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text("Tüm alanları doldurun!")),
-                  );
-                  return;
-                }
-
-                final ok = await provider.makeReservation(
-                  chairId: chairId,
-                  time: time,
-                  name: name,
-                  surname: surname,
-                  phone: phone,
-                );
-
-                Navigator.pop(dctx);
-
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok
-                          ? "Rezervasyon oluşturuldu!"
-                          : "Rezervasyon başarısız oldu!",
-                    ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              },
-            ),
-          ],
-        );
-      },
+                ),
+                onPressed: () async {
+                  if (name.isEmpty || surname.isEmpty || phone.isEmpty) return;
+                  final ok = await provider.makeReservation(
+                    chairId: chairId,
+                    time: time,
+                    name: name,
+                    surname: surname,
+                    phone: phone,
+                  );
+                  Navigator.pop(dctx);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        ok ? "Rezervasyon Başarılı" : "Hata Oluştu",
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Onayla",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
     );
   }
 
@@ -307,10 +470,11 @@ class _ChairAvailabilityScreenState extends State<ChairAvailabilityScreen> {
         keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
+          filled: true,
+          fillColor: AppColors.background.withOpacity(0.5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
         ),
         onChanged: onChange,
